@@ -1,0 +1,10 @@
+@charset "utf-8";
+
+.Button {
+  display: inline-block;
+  font-size: 1.25rem;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  background-color: var(--primary-color);
+  color: var(--white-color);
+}
