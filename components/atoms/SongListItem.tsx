@@ -1,12 +1,13 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import styles from "./SongListItem.module.css"
+import styles from "@/styles/SongListItem.module.css";
 
 interface SongListItemProps {
   id: string;
+  onRemove: (id: string) => void;
 }
 
-const SongListItem: React.FC<SongListItemProps> = ({ id }) => {
+const SongListItem: React.FC<SongListItemProps> = ({ id, onRemove }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
@@ -16,14 +17,9 @@ const SongListItem: React.FC<SongListItemProps> = ({ id }) => {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={styles.SongListItem}
-    >
-      {id}
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={styles.SongListItem}>
+      <span>{id}</span>
+      <button className={styles.RemoveButton} onClick={() => onRemove(id)}>✖</button>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -13,12 +12,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SongListItem from "@/components/atoms/SongListItem";
-import styles from "./SetList.module.css"
 
+type DragDropListProps = {
+  items: string[];
+  setItems: React.Dispatch<React.SetStateAction<string[]>>;
+};
 
-const DragDropList = () => {
-  const [items, setItems] = useState(["We are in the Heyday of Youth", "Blinded My Eyes", "Introduce", "Insurance", "Long Way to Failure"]);
-
+const DragDropList = ({ items, setItems }: DragDropListProps) => {
   const sensors = useSensors(useSensor(PointerSensor));
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -32,18 +32,20 @@ const DragDropList = () => {
     }
   };
 
+  // 曲を削除する関数
+  const handleRemove = (id: string) => {
+    setItems((prev) => prev.filter((song) => song !== id));
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
-        <div className={styles.SetList}>
-          <h2>今夜のセットリスト</h2>
-          {items.map((id) => (
-            <SongListItem key={id} id={id} />
-          ))}
-        </div>
+        {items.map((id) => (
+          <SongListItem key={id} id={id} onRemove={handleRemove} />
+        ))}
       </SortableContext>
     </DndContext>
   );
-}
+};
 
 export default DragDropList;

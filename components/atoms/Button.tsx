@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import styles from "@/components/atoms/Button.module.css"
+import styles from "@/styles/Button.module.css"
 
 interface ButtonProps {
   href: string;
