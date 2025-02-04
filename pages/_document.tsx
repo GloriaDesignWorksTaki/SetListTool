@@ -7,7 +7,7 @@ export default function Document() {
         <meta httpEquiv="Cache-Control" content="no-cache" />
         <meta name="robots" content="noindex" />
         <meta name="googlebot" content="noindex" />
-        <title>セットリスト作成ツール</title>
+        <title>セットリスト作成ツールだよ</title>
         <meta name="description" content="セットリストが簡単に作れるツールです。PDF、png、jpegで書き出せます。" />
       </Head>
       <body>
