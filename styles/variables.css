@@ -1,0 +1,16 @@
+@charset "utf-8";
+
+/* Variables */
+:root {
+  /* Primary Color */
+  --primary-color: #EA5343;
+  /* Secondary Color */
+  --secondary-color: #004EA0;
+  /* Other Color */
+  --accent-color: #04A774;
+  --black-color: #333333;
+  --white-color: #FFFFFF;
+  /* Font */
+  --font-family: Arial, Helvetica, sans-serif;
+  --font-size: 16px;
+}

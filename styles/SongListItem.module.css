@@ -1,0 +1,9 @@
+@charset "utf-8";
+
+.SongListItem {
+  font-size: 1.25rem;
+  padding: 1rem;
+  border: 1px solid #333333;
+  background-color: var(--white-color);
+  cursor: pointer;
+}
