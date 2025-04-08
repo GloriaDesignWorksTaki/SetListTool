@@ -1,38 +1,22 @@
-"use client";
+import React from "react";
+import { NextPage } from "next";
+import Head from "next/head";
+import SetlistTool from "@/components/organisms/SetlistTool";
 
-import { useState } from "react";
-import DragDropList from "@/components/organisms/Setlist";
-import AddSong from "@/components/organisms/AddSong";
-import Button from "@/components/atoms/Button";
-
-export default function Main() {
-  const [items, setItems] = useState([
-    "We are in the Heyday of Youth",
-    "Blinded My Eyes",
-    "Introduce",
-    "Insurance",
-    "Long Way to Failure",
-  ]);
-
-  const Home = (newSong: string) => {
-    setItems((prev) => [...prev, newSong]);
-  };
-
+const Home: NextPage = () => {
   return (
     <main>
-      <section id="SongList">
+      <Head>
+        <title>Setlist Maker | セットリスト作成ツール</title>
+        <meta name="description" content="バンドのセットリストを簡単に作成し、PDFで書き出すツールです。" />
+      </Head>
+      <section>
         <div className="wrapper">
-          <AddSong onAddSong={Home} />
-        </div>
-      </section>
-      <section id="SetList">
-        <div className="wrapper">
-          <DragDropList items={items} setItems={setItems} />
-          <div className="box">
-            <Button href="" text="PDFで書き出し" />
-          </div>
+          <SetlistTool />
         </div>
       </section>
     </main>
   );
-}
+};
+
+export default Home;

@@ -1,0 +1,182 @@
+@charset "UTF-8";
+
+:root {
+  /* Primary Color */
+  --primary-color: #6670da;
+  --primary-dark: #454fb5;
+  --primary-light: #8590e0;
+  --primary-pale: #e0e5ff;
+  /* Secondary Color */
+  --secondary-color: #f0f0f0;
+  /* Other Color */
+  --white-color: #ffffff;
+  --black-color: #333333;
+  --gray-color: #efefef;
+  /* Shadow */
+}
+
+/* Global */
+html, body {
+  overscroll-behavior-x: none !important;
+}
+
+/* Title */
+.h2Title {
+  font-weight: bold;
+}
+
+/* section */
+section {
+  padding: 3rem;
+}
+section .wrapper {
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.setlistContent {
+  display: flex;
+  justify-content: space-between;
+}
+.setlistContent .container {
+  width: 48%;
+}
+/* Block */
+.block {
+  margin-bottom: 3rem;
+}
+
+/* Button */
+.button {
+  margin-top: 1rem;
+}
+.button a {
+  display: inline-block;
+  text-decoration: none;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  background-color: #000000;
+}
+
+/* Form Parts */
+.input {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 5px;
+  border: none;
+  background-color: var(--gray-color);
+  margin-top: 1rem;
+}
+.submitButton {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.3s ease;
+}
+.submitButton:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Song Card */
+.cardList {
+  margin-top: 1rem;
+}
+.songCard {
+  padding: 1rem;
+  border-radius: 5px;
+  background-color: var(--primary-pale);
+  color: var(--primary-dark);
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.songCard .songCardTitle {
+  flex-grow: 1;
+  margin-left: .25rem;
+}
+.songCard + .songCard {
+  margin-top: .5rem;
+}
+.songCardDelete,
+.RemoveFromSetlistButton,
+.AddToSetlistButton {
+  cursor: pointer;
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+.songCardDelete:hover,
+.RemoveFromSetlistButton:hover,
+.AddToSetlistButton:hover {
+  background-color: var(--primary-dark);
+}
+.RemoveFromSetlistButton,
+.AddToSetlistButton {
+  margin-left: .5rem;
+}
+
+/* Setlist Card List */
+.setlistCardList {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.setlistCardList .songCard {
+  cursor: grab;
+}
+
+/* SortableItem */
+.sortableItem {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.sortableItem .sortableItemOrder {
+  font-weight: bold;
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  padding: .75rem 1rem;
+  border-radius: 5px;
+}
+.sortableItem .sortableItemSongCard {
+  flex-grow: 1;
+}
+
+/* Header */
+header {
+  padding: 2rem 1rem;
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  display: flex;
+  align-items: center;
+}
+header h1 {
+  flex-grow: 1;
+}
+header nav ul {
+  display: flex;
+  gap: 1rem;
+}
+header nav ul li a {
+  text-decoration: none;
+  color: var(--white-color);
+}
+
+/* Footer */
+footer {
+  padding: 2rem 1rem;
+  background-color: var(--primary-color);
+  color: var(--white-color);
+}
+footer .copy {
+  text-align: center;
+}

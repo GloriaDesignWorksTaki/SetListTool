@@ -1,19 +1,30 @@
-import { Html, Head, Main, NextScript } from "next/document";
+import Document, { Html, Head, Main, NextScript } from 'next/document';
+import Header from '@/components/organisms/Header';
+import Footer from '@/components/organisms/Footer';
 
-export default function Document() {
-  return (
-    <Html lang="ja">
-      <Head>
-        <meta httpEquiv="Cache-Control" content="no-cache" />
-        <meta name="robots" content="noindex" />
-        <meta name="googlebot" content="noindex" />
-        <title>セットリスト作成ツール</title>
-        <meta name="description" content="セットリストが簡単に作れるツールです。PDF、png、jpegで書き出せます。" />
-      </Head>
-      <body>
-        <Main />
-        <NextScript />
-      </body>
-    </Html>
-  );
+// propsの型
+type Props = {}
+
+class AppDocument extends Document<Props> {
+  render() {
+    return (
+      <Html lang="ja">
+        <Head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta httpEquiv="Cache-Control" content="no-cache" />
+          <meta name="robots" content="noindex" />
+          <meta name="googlebot" content="noindex" />
+        </Head>
+        <body>
+          <Header />
+          <Main />
+          <Footer />
+          <NextScript />
+        </body>
+      </Html>
+    )
+  }
 }
+
+export default AppDocument;
