@@ -1,16 +1,18 @@
-"use client";
+import { memo, ReactNode, useMemo } from "react"
+import Link from "next/link"
 
-import Link from "next/link";
-import styles from '@/styles/Header.module.css';
-
-const Header: React.FC = () => {
+const Header: React.FC = (() => {
   return (
-    <header className={styles.header}>
-      <Link href="/" className={styles.headerTitle}>
-        <h1>セットリスト作成ツール</h1>
-      </Link>
+    <header>
+      <h1>Setlist Maker</h1>
+      <nav>
+        <ul>
+          <li><Link href="/">Home</Link></li>
+          <li><Link href="/settings">Settings</Link></li>
+        </ul>
+      </nav>
     </header>
   )
-}
+})
 
 export default Header;
