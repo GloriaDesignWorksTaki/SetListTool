@@ -34,6 +34,13 @@ section .wrapper {
   margin: 0 auto;
 }
 
+.setlistContent {
+  display: flex;
+  justify-content: space-between;
+}
+.setlistContent .container {
+  width: 48%;
+}
 /* Block */
 .block {
   margin-bottom: 3rem;
@@ -89,10 +96,16 @@ section .wrapper {
   justify-content: space-between;
   align-items: center;
 }
+.songCard .songCardTitle {
+  flex-grow: 1;
+  margin-left: .25rem;
+}
 .songCard + .songCard {
   margin-top: .5rem;
 }
-.songCardDelete {
+.songCardDelete,
+.RemoveFromSetlistButton,
+.AddToSetlistButton {
   cursor: pointer;
   background-color: var(--primary-color);
   color: var(--white-color);
@@ -101,8 +114,41 @@ section .wrapper {
   border-radius: 5px;
   transition: background-color 0.3s ease;
 }
-.songCardDelete:hover {
+.songCardDelete:hover,
+.RemoveFromSetlistButton:hover,
+.AddToSetlistButton:hover {
   background-color: var(--primary-dark);
+}
+.RemoveFromSetlistButton,
+.AddToSetlistButton {
+  margin-left: .5rem;
+}
+
+/* Setlist Card List */
+.setlistCardList {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.setlistCardList .songCard {
+  cursor: grab;
+}
+
+/* SortableItem */
+.sortableItem {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.sortableItem .sortableItemOrder {
+  font-weight: bold;
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  padding: .75rem 1rem;
+  border-radius: 5px;
+}
+.sortableItem .sortableItemSongCard {
+  flex-grow: 1;
 }
 
 /* Header */

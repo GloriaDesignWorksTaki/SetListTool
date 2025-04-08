@@ -10,12 +10,11 @@ export default NextAuth({
         password: { label: "パスワード", type: "password" },
       },
       async authorize(credentials) {
-        // 認証ロジックをここに追加
-        return { id: "1", email: credentials?.email }; // サンプルユーザー
+        return { id: "1", email: credentials?.email };
       },
     }),
   ],
   pages: {
-    signIn: "/auth/signin", // サインインページのパス
+    signIn: "/auth/signin",
   },
 }); 

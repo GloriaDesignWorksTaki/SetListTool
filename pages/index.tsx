@@ -1,7 +1,7 @@
 import React from "react";
 import { NextPage } from "next";
 import Head from "next/head";
-import SetlistTool from "@/components/SetlistTool";
+import SetlistTool from "@/components/organisms/SetlistTool";
 
 const Home: NextPage = () => {
   return (
