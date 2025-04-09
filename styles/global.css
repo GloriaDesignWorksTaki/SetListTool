@@ -140,6 +140,9 @@ section .wrapper {
   align-items: center;
   gap: .5rem;
 }
+.sortableItem:hover {
+  cursor: grabbing; /* ドラッグ中のカーソル */
+}
 .sortableItem .sortableItemOrder {
   font-weight: bold;
   background-color: var(--primary-color);
@@ -149,6 +152,20 @@ section .wrapper {
 }
 .sortableItem .sortableItemSongCard {
   flex-grow: 1;
+}
+
+/* Auth */
+.auth {
+  min-height: calc(100vh - 6rem);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.auth .authForm {
+  padding: 3rem;
+  max-width: 400px;
+  background-color: var(--primary-pale);
+  border-radius: 5px;
 }
 
 /* Header */
