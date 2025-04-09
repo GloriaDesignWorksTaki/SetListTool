@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/pages/api/supabaseClient'
 import { useRouter } from 'next/router'
+import Image from 'next/image'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -29,6 +30,9 @@ export default function Auth() {
       <div className="authDesc">
         <h2>About Setlist Maker</h2>
         <p>Setlist Maker is a tool that allows you to easily create setlists for your band and export them as PDFs.</p>
+        <div className="descImg">
+          <Image src="/img/logo.webp" alt="Setlist Maker" width={300} height={300} />
+        </div>
       </div>
       <div className="authForm">
         <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>

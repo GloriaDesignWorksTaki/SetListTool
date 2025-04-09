@@ -23,12 +23,8 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, onAddToSetlist, onRemov
     <div className="sortableItem">
       {order !== undefined && <span className="sortableItemOrder">{order}</span>}
       <div
-        className="sortableItemSongCard"
+        style={{ flexGrow: 1 }}
         ref={setNodeRef}
-        style={{
-          transform: CSS.Transform.toString(transform),
-          transition,
-        }}
         {...attributes}
         {...listeners}
       >

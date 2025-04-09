@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
-import { pdf, Document, Page, Text, View } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, Font } from '@react-pdf/renderer';
 import SongInput from "@/components/molecules/SongInput";
 import SortableItem from "@/components/molecules/SortableItem";
 import SongCard from "@/components/atoms/SongCard";
@@ -89,11 +89,6 @@ const SetlistTool = () => {
 
     if (!over || active.id === over.id) return;
 
-    if (over.id === "removeArea") {
-      handleRemoveFromSetlist(active.id as string);
-      return;
-    }
-
     const oldIndex = setlist.indexOf(active.id as string);
     const newIndex = setlist.indexOf(over.id as string);
 
@@ -108,10 +103,6 @@ const SetlistTool = () => {
     ).toBlob();
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
-  };
-
-  const addMC = () => {
-    handleAddToSetlist("MC");
   };
 
   return (
@@ -157,15 +148,12 @@ const SetlistTool = () => {
                     onRemoveFromSetlist={handleRemoveFromSetlist}
                     isInSetlist={true}
                     index={index}
-                    order={song === "MC" ? undefined : index + 1}
+                    order={index + 1}
                   />
                 ))}
               </SortableContext>
             </DndContext>
           </div>
-        </div>
-        <div className="block">
-          <Submit onClick={addMC} text="Add MC" />
         </div>
         <div className="block">
           <H2itle title="Date" />
