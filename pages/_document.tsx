@@ -1,6 +1,4 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
-import Header from '@/components/organisms/Header';
-import Footer from '@/components/organisms/Footer';
 
 // propsの型
 type Props = {}
@@ -17,9 +15,7 @@ class AppDocument extends Document<Props> {
           <meta name="googlebot" content="noindex" />
         </Head>
         <body>
-          <Header />
           <Main />
-          <Footer />
           <NextScript />
         </body>
       </Html>
