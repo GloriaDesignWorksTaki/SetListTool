@@ -17,8 +17,17 @@ export default function Auth() {
     const { error } = isLogin
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password })
+
     if (error) {
-      alert(error.message)
+      let errorMessage = 'login failed'
+      if (error.message.includes('invalid email')) {
+        errorMessage = 'invalid email'
+      } else if (error.message.includes('invalid password')) {
+        errorMessage = 'invalid password'
+      } else if (error.message.includes('user not found')) {
+        errorMessage = 'user not found'
+      }
+      alert(errorMessage)
     } else {
       router.push('/')
     }
@@ -27,13 +36,6 @@ export default function Auth() {
 
   return (
     <div className="auth">
-      <div className="authDesc">
-        <h2>About Setlist Maker</h2>
-        <p>Setlist Maker is a tool that allows you to easily create setlists for your band and export them as PDFs.</p>
-        <div className="descImg">
-          <Image src="/img/logo.webp" alt="Setlist Maker" width={300} height={300} />
-        </div>
-      </div>
       <div className="authForm">
         <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
         <input
