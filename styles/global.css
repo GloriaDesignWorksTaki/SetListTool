@@ -221,3 +221,23 @@ footer {
 footer .copy {
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .setlistContent {
+    flex-direction: column;
+  }
+  .setlistContent .container {
+    width: 100%;
+  }
+
+  /* SongCard, MCCard */
+  .songCard .songCardTitle, .mcCard .mcCardTitle {
+    line-height: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  section {
+    padding: 1rem;
+  }
+}
