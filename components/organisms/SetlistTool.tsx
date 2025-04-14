@@ -3,7 +3,7 @@ import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { pdf, Document, Page, Text, View, Font } from '@react-pdf/renderer';
 import SongInput from "@/components/molecules/SongInput";
-import SortableItem from "@/components/molecules/SortableItem";
+import { SortableItem } from "@/components/molecules/SortableItem";
 import SongCard from "@/components/atoms/SongCard";
 import H2itle from "@/components/atoms/H2Title";
 import Date from "@/components/atoms/form/Date";
@@ -11,7 +11,14 @@ import Input from "@/components/atoms/form/Input";
 import Submit from "@/components/atoms/form/Submit";
 import { supabase } from "@/pages/api/supabaseClient";
 
-const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; date: string; venue: string; setlist: string[]; eventTitle: string }) => (
+type SetlistItem = {
+  id: string;
+  type: 'song' | 'mc';
+  content: string;
+  order: number;
+};
+
+const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; date: string; venue: string; setlist: SetlistItem[]; eventTitle: string }) => (
   <Document>
     <Page size="A4" style={{ padding: 15 }}>
       <div style={{ backgroundColor: 'black', padding: 30, height: '100%' }}>
@@ -19,8 +26,18 @@ const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; 
         <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{date}</Text>
         <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{eventTitle}</Text>
         <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 40, color: 'white' }}>{venue}</Text>
-        {setlist.map((song, index) => (
-          <Text key={index} style={{ fontSize: 32, marginBottom: 10, color: 'white' }}>{`${index + 1}. ${song}`}</Text>
+        {setlist.map((item, index) => (
+          <Text 
+            key={item.id} 
+            style={{ 
+              fontSize: 30, 
+              marginBottom: 10, 
+              color: 'white',
+              padding: item.type === 'mc' ? 5 : 0
+            }}
+          >
+            {item.type === 'song' ? `${item.order}. ${item.content}` : `---MC: ${item.content}---`}
+          </Text>
         ))}
       </div>
     </Page>
@@ -29,11 +46,12 @@ const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; 
 
 const SetlistTool = () => {
   const [songs, setSongs] = useState<string[]>([]);
-  const [setlist, setSetlist] = useState<string[]>([]);
+  const [setlist, setSetlist] = useState<SetlistItem[]>([]);
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
   const [name, setName] = useState("");
   const [eventTitle, setEventTitle] = useState("");
+  const [mcInput, setMcInput] = useState("");
 
   useEffect(() => {
     const savedSongs = localStorage.getItem("songs");
@@ -75,13 +93,49 @@ const SetlistTool = () => {
   };
 
   const handleAddToSetlist = (songToAdd: string) => {
-    setSetlist((prev) => [...prev, songToAdd]);
+    const newItem: SetlistItem = {
+      id: `song-${performance.now()}`,
+      type: 'song',
+      content: songToAdd,
+      order: setlist.filter(item => item.type === 'song').length + 1
+    };
+    setSetlist((prev) => [...prev, newItem]);
     setSongs((prev) => prev.filter((song) => song !== songToAdd));
   };
 
-  const handleRemoveFromSetlist = (songToRemove: string) => {
-    setSetlist((prev) => prev.filter((song) => song !== songToRemove));
-    setSongs((prev) => [...prev, songToRemove]);
+  const handleAddMC = () => {
+    if (mcInput.trim()) {
+      const newItem: SetlistItem = {
+        id: `mc-${performance.now()}`,
+        type: 'mc',
+        content: mcInput.trim(),
+        order: 0
+      };
+      setSetlist((prev) => [...prev, newItem]);
+      setMcInput("");
+    }
+  };
+
+  const handleRemoveFromSetlist = (id: string) => {
+    const itemToRemove = setlist.find(item => item.id === id);
+    if (itemToRemove?.type === 'song') {
+      setSongs((prev) => [...prev, itemToRemove.content]);
+    }
+    setSetlist((prev) => {
+      const updatedSetlist = prev.filter(item => item.id !== id);
+      // 曲の順番を更新（MCカードを除いて計算）
+      let songCount = 0;
+      return updatedSetlist.map((item) => {
+        if (item.type === 'song') {
+          songCount++;
+          return {
+            ...item,
+            order: songCount
+          };
+        }
+        return item;
+      });
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -89,11 +143,25 @@ const SetlistTool = () => {
 
     if (!over || active.id === over.id) return;
 
-    const oldIndex = setlist.indexOf(active.id as string);
-    const newIndex = setlist.indexOf(over.id as string);
+    const oldIndex = setlist.findIndex(item => item.id === active.id);
+    const newIndex = setlist.findIndex(item => item.id === over.id);
 
     if (oldIndex !== -1 && newIndex !== -1) {
-      setSetlist((prev) => arrayMove(prev, oldIndex, newIndex));
+      setSetlist((prev) => {
+        const updatedSetlist = arrayMove(prev, oldIndex, newIndex);
+        // 曲の順番を更新（MCカードを除いて計算）
+        let songCount = 0;
+        return updatedSetlist.map((item) => {
+          if (item.type === 'song') {
+            songCount++;
+            return {
+              ...item,
+              order: songCount
+            };
+          }
+          return item;
+        });
+      });
     }
   };
 
@@ -110,7 +178,7 @@ const SetlistTool = () => {
       <div className="container">
         <div className="block">
           <H2itle title="Artist Name" />
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="enter artist name" required />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter Artist Name" required />
         </div>
         <div className="block">
           <H2itle title="Song Title" />
@@ -140,19 +208,32 @@ const SetlistTool = () => {
           <div className="cardList setlistCardList">
             <DndContext onDragEnd={handleDragEnd}>
               <SortableContext id="setlist" items={setlist} strategy={verticalListSortingStrategy}>
-                {setlist.map((song, index) => (
+                {setlist.map((item, index) => (
                   <SortableItem
-                    key={song} 
-                    id={song} 
+                    key={item.id} 
+                    id={item.id} 
                     onAddToSetlist={handleAddToSetlist} 
                     onRemoveFromSetlist={handleRemoveFromSetlist}
                     isInSetlist={true}
                     index={index}
-                    order={index + 1}
+                    order={item.type === 'song' ? item.order : 0}
+                    isMC={item.type === 'mc'}
+                    content={item.content}
                   />
                 ))}
               </SortableContext>
             </DndContext>
+          </div>
+        </div>
+        <div className="block">
+          <H2itle title="Add MC" />
+          <div className="flex gap-4">
+            <Input 
+              value={mcInput} 
+              onChange={(e) => setMcInput(e.target.value)} 
+              placeholder="Enter MC Content" 
+            />
+            <Submit onClick={handleAddMC} text="Add MC" />
           </div>
         </div>
         <div className="block">
@@ -161,11 +242,11 @@ const SetlistTool = () => {
         </div>
         <div className="block">
           <H2itle title="Event Title" />
-          <Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="enter event title" required />
+          <Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="Enter Event Title" required />
         </div>
         <div className="block">
           <H2itle title="Venue" />
-          <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="enter venue" required />
+          <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter Venue" required />
         </div>
         <div className="block">
           <Submit onClick={openPDFPreview} text="Preview PDF" />

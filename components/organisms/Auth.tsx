@@ -55,8 +55,8 @@ export default function Auth() {
         <button onClick={handleAuth} disabled={loading} className="submitButton">
           {loading ? 'Loading...' : isLogin ? 'Login' : 'Sign Up'}
         </button>
-        <p onClick={() => setIsLogin(!isLogin)} style={{ cursor: 'pointer', marginTop: 12 }}>
-          {isLogin ? 'Sign Up' : 'Login'}
+        <p className="signUpButton" onClick={() => setIsLogin(!isLogin)}>
+          {isLogin ? 'Sign Up Here' : 'Login'}
         </p>
       </div>
     </div>

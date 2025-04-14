@@ -7,12 +7,14 @@
   --primary-light: #8590e0;
   --primary-pale: #e0e5ff;
   /* Secondary Color */
-  --secondary-color: #f0f0f0;
+  --secondary-color: #da6674;
+  --secondary-dark: #b5454f;
+  --secondary-light: #e08590;
+  --secondary-pale: #ffd0d5;
   /* Other Color */
   --white-color: #ffffff;
   --black-color: #333333;
   --gray-color: #efefef;
-  /* Shadow */
 }
 
 /* Global */
@@ -86,7 +88,8 @@ section .wrapper {
 .cardList {
   margin-top: 1rem;
 }
-.songCard {
+.songCard,
+.mcCard {
   padding: 1rem;
   border-radius: 5px;
   background-color: var(--primary-pale);
@@ -96,7 +99,13 @@ section .wrapper {
   justify-content: space-between;
   align-items: center;
 }
-.songCard .songCardTitle {
+.mcCard {
+  background-color: var(--secondary-pale);
+  color: var(--secondary-dark);
+  cursor: grab;
+}
+.songCard .songCardTitle,
+.mcCard .mcCardTitle {
   flex-grow: 1;
   margin-left: .25rem;
 }
@@ -123,6 +132,9 @@ section .wrapper {
 .AddToSetlistButton {
   margin-left: .5rem;
 }
+.mcCard .RemoveFromSetlistButton {
+  background-color: var(--secondary-color);
+}
 
 /* Setlist Card List */
 .setlistCardList {
@@ -132,6 +144,9 @@ section .wrapper {
 }
 .setlistCardList .songCard {
   cursor: grab;
+}
+.setlistCardList .sortableItemContent {
+  width: 100%;
 }
 
 /* SortableItem */
@@ -166,6 +181,15 @@ section .wrapper {
   max-width: 400px;
   background-color: var(--primary-pale);
   border-radius: 5px;
+}
+.auth .signUpButton {
+  margin-top: 1rem;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.auth .signUpButton:hover {
+  color: var(--primary-dark);
 }
 
 /* Header */

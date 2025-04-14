@@ -19,8 +19,8 @@ const SongInput = ({ onAddSong }: SongInputProps) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Input value={song} onChange={(e) => setSong(e.target.value)} placeholder="enter the song name" required />
-      <Submit onClick={handleSubmit} text="add song" />
+      <Input value={song} onChange={(e) => setSong(e.target.value)} placeholder="Enter The Song Name" required />
+      <Submit onClick={handleSubmit} text="Add Song" />
     </form>
   );
 };

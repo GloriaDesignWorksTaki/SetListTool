@@ -6,7 +6,7 @@ import { CSS } from "@dnd-kit/utilities"
 
 type SongCardProps = {
   song: string;
-  onDelete: (song: string) => void;
+  onDelete?: (song: string) => void;
   onAddToSetlist?: (song: string) => void;
   onRemoveFromSetlist?: (song: string) => void;
   isInSetlist?: boolean;
@@ -22,10 +22,6 @@ const SongCard: React.FC<SongCardProps> = memo(({ song, onDelete, onAddToSetlist
   return (
     <div
       ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
       {...attributes}
       {...listeners}
       className="songCard"
@@ -34,8 +30,8 @@ const SongCard: React.FC<SongCardProps> = memo(({ song, onDelete, onAddToSetlist
       <span className="songCardTitle">{song}</span>
       {isInSetlist ? null : (
         <>
-          <button onClick={() => onDelete(song)} className="songCardDelete">Delete</button>
-          <button onClick={() => onAddToSetlist?.(song)} className="AddToSetlistButton">{buttonLabel}</button>
+          {onDelete && <button onClick={() => onDelete(song)} className="songCardDelete">Delete</button>}
+          {onAddToSetlist && <button onClick={() => onAddToSetlist(song)} className="AddToSetlistButton">{buttonLabel}</button>}
         </>
       )}
     </div>
