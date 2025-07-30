@@ -6,6 +6,9 @@ import { SongInput } from "@/components/molecules/SongInput";
 import { SortableItem } from "@/components/molecules/SortableItem";
 import SongCard from "@/components/atoms/SongCard";
 import H2Title from "@/components/atoms/H2Title";
+import Date from "@/components/atoms/form/Date";
+import Input from "@/components/atoms/form/Input";
+import Submit from "@/components/atoms/form/Submit";
 import { supabase } from "@/pages/api/supabaseClient";
 
 type SetlistItem = {
@@ -97,6 +100,7 @@ const SetlistTool = () => {
       order: setlist.filter(item => item.type === 'song').length + 1
     };
     setSetlist((prev) => [...prev, newItem]);
+    setSongs((prev) => prev.filter((song) => song !== songToAdd));
   };
 
   const handleAddMC = () => {
@@ -105,7 +109,7 @@ const SetlistTool = () => {
         id: `mc-${performance.now()}`,
         type: 'mc',
         content: mcInput.trim(),
-        order: setlist.length + 1
+        order: 0
       };
       setSetlist((prev) => [...prev, newItem]);
       setMcInput("");
@@ -113,13 +117,21 @@ const SetlistTool = () => {
   };
 
   const handleRemoveFromSetlist = (id: string) => {
+    const itemToRemove = setlist.find(item => item.id === id);
+    if (itemToRemove?.type === 'song') {
+      setSongs((prev) => [...prev, itemToRemove.content]);
+    }
     setSetlist((prev) => {
-      const updatedSetlist = prev.filter((item) => item.id !== id);
-      // 曲の順番を再計算
-      let songOrder = 1;
+      const updatedSetlist = prev.filter(item => item.id !== id);
+      // 曲の順番を更新（MCカードを除いて計算）
+      let songCount = 0;
       return updatedSetlist.map((item) => {
         if (item.type === 'song') {
-          return { ...item, order: songOrder++ };
+          songCount++;
+          return {
+            ...item,
+            order: songCount
+          };
         }
         return item;
       });
@@ -129,18 +141,23 @@ const SetlistTool = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-      setSetlist((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
+    if (!over || active.id === over.id) return;
 
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        
-        // 曲の順番を再計算
-        let songOrder = 1;
-        return newItems.map((item) => {
+    const oldIndex = setlist.findIndex(item => item.id === active.id);
+    const newIndex = setlist.findIndex(item => item.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      setSetlist((prev) => {
+        const updatedSetlist = arrayMove(prev, oldIndex, newIndex);
+        // 曲の順番を更新（MCカードを除いて計算）
+        let songCount = 0;
+        return updatedSetlist.map((item) => {
           if (item.type === 'song') {
-            return { ...item, order: songOrder++ };
+            songCount++;
+            return {
+              ...item,
+              order: songCount
+            };
           }
           return item;
         });
@@ -149,101 +166,86 @@ const SetlistTool = () => {
   };
 
   const openPDFPreview = async () => {
-    const doc = <MyDocument name={name} date={date} venue={venue} setlist={setlist} eventTitle={eventTitle} />;
-    const pdfBlob = await pdf(doc).toBlob();
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    const newTab = window.open(pdfUrl, '_blank');
-    if (newTab) {
-      newTab.focus();
-    } else {
-      alert('Please allow popups for this website');
-    }
+    const blob = await pdf(
+      <MyDocument name={name} date={date} venue={venue} setlist={setlist} eventTitle={eventTitle} />
+    ).toBlob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
   };
 
   return (
-    <div className="setlistTool">
-      <div className="inputSection">
-        <H2Title title="アーティスト名" />
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="アーティスト名を入力"
-          className="input"
-        />
-
-        <H2Title title="曲名" />
-        <SongInput onAddSong={addSong} />
-
-        <H2Title title="日付" />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="input"
-        />
-
-        <H2Title title="会場" />
-        <input
-          type="text"
-          value={venue}
-          onChange={(e) => setVenue(e.target.value)}
-          placeholder="会場名を入力"
-          className="input"
-        />
-
-        <H2Title title="イベントタイトル" />
-        <input
-          type="text"
-          value={eventTitle}
-          onChange={(e) => setEventTitle(e.target.value)}
-          placeholder="イベントタイトルを入力"
-          className="input"
-        />
-
-        <button onClick={openPDFPreview} className="submitButton">
-          PDFプレビュー
-        </button>
-      </div>
-
-      <div className="setlistSection">
-        <div className="addedSongs">
-          <H2Title title="追加された曲" />
-          <div className="songList">
-            {songs.map((song, index) => (
-              <SongCard
-                key={`${song}-${index}`}
-                id={`${song}-${index}`}
-                song={song}
-                onAddToSetlist={handleAddToSetlist}
-                onRemoveFromSetlist={() => handleDeleteSong(song)}
-                isInSetlist={false}
+    <div className="setlistContent">
+      <div className="container">
+        <div className="block">
+          <H2Title title="Song Title" />
+          <SongInput onAddSong={addSong} />
+        </div>
+        <div className="block">
+          <H2Title title="Added Songs" />
+          <div className="cardList">
+            {songs.map((song) => (
+              <SongCard 
+                key={song} 
+                id={song} 
+                song={song} 
+                onDelete={handleDeleteSong} 
+                onAddToSetlist={handleAddToSetlist} 
                 buttonLabel="Add Setlist"
+                index={0}
+                showIndex={false}
               />
             ))}
           </div>
         </div>
-
-        <div className="setlist">
-          <H2Title title="セットリスト" />
-          <DndContext onDragEnd={handleDragEnd}>
-            <SortableContext items={setlist.map(item => item.id)} strategy={verticalListSortingStrategy}>
-              <div className="setlistItems">
+      </div>
+      <div className="container">
+        <div className="block">
+          <H2Title title="Setlist" />
+          <div className="cardList setlistCardList">
+            <DndContext onDragEnd={handleDragEnd}>
+              <SortableContext id="setlist" items={setlist} strategy={verticalListSortingStrategy}>
                 {setlist.map((item, index) => (
                   <SortableItem
-                    key={item.id}
-                    id={item.id}
-                    content={item.content}
-                    index={index}
-                    order={item.order}
-                    onAddToSetlist={() => {}}
-                    onRemoveFromSetlist={() => handleRemoveFromSetlist(item.id)}
+                    key={item.id} 
+                    id={item.id} 
+                    onAddToSetlist={handleAddToSetlist} 
+                    onRemoveFromSetlist={handleRemoveFromSetlist}
                     isInSetlist={true}
+                    index={index}
+                    order={item.type === 'song' ? item.order : 0}
+                    isMC={item.type === 'mc'}
+                    content={item.content}
                   />
                 ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+              </SortableContext>
+            </DndContext>
+          </div>
+        </div>
+        <div className="block">
+          <H2Title title="Add MC" />
+          <div className="flex gap-4">
+            <Input 
+              value={mcInput} 
+              onChange={(e) => setMcInput(e.target.value)} 
+              placeholder="Enter MC Content" 
+            />
+            <Submit onClick={handleAddMC} text="Add MC" />
+          </div>
+        </div>
+        <div className="block">
+          <H2Title title="Date" />
+          <Date value={date} onChange={(e) => setDate(e.target.value)} required />
+        </div>
+        <div className="block">
+          <H2Title title="Event Title" />
+          <Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="Enter Event Title" required />
+        </div>
+        <div className="block">
+          <H2Title title="Venue" />
+          <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter Venue" required />
+        </div>
+        <div className="block">
+          <Submit onClick={openPDFPreview} text="Preview PDF" />
         </div>
       </div>
     </div>

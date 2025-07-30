@@ -219,22 +219,36 @@ section .wrapper {
 
 /* Header */
 header {
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   background-color: var(--primary-color);
   color: var(--white-color);
   display: flex;
   align-items: center;
+  gap: 1rem;
 }
 header h1 {
   flex-grow: 1;
 }
 header nav ul {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 header nav ul li a {
   text-decoration: none;
   color: var(--white-color);
+}
+header .headerContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+header .bandName {
+  font-size: .825rem;
+  padding: .75rem 1rem;
+  background-color: var(--primary-dark);
+  border-radius: 5px;
+  color: var(--white-color);
+  font-weight: bold;
 }
 
 /* Footer */

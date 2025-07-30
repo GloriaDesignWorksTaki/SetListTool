@@ -22,10 +22,10 @@ export const SongInput: React.FC<SongInputProps> = ({ onAddSong }) => {
       <Input
         value={song}
         onChange={(e) => setSong(e.target.value)}
-        placeholder="曲名を入力"
+        placeholder="Enter Song Title"
         required={true}
       />
-      <Button type="submit" text="追加" />
+      <Button className='submitButton' type="submit" text="Add Song" />
     </form>
   )
 } 

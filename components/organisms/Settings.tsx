@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/pages/api/supabaseClient'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
+import { useBand } from '@/contexts/BandContext'
 
 export default function Settings() {
   const [bandName, setBandName] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { setBandName: setGlobalBandName } = useBand()
 
   useEffect(() => {
     const fetchBand = async () => {
@@ -22,15 +25,23 @@ export default function Settings() {
           .from('bands')
           .select('name')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
         
         if (error) {
           console.error('バンド情報の取得に失敗しました:', error)
+          // テーブルが存在しない場合は無視
+          if (error.code === '42703' || error.code === '42P01') {
+            console.log('bandsテーブルまたはnameカラムが存在しません')
+            return
+          }
           return
         }
 
         if (band) {
           setBandName(band.name || '')
+        } else {
+          // バンドデータが存在しない場合は空文字を設定
+          setBandName('')
         }
       } catch (error) {
         console.error('エラーが発生しました:', error)
@@ -45,7 +56,7 @@ export default function Settings() {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        alert('ログインが必要です')
+        alert('Login is required')
         router.push('/login')
         return
       }
@@ -57,8 +68,8 @@ export default function Settings() {
         .single()
 
       if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('バンド情報の取得に失敗しました:', fetchError)
-        alert('バンド情報の取得に失敗しました')
+        console.error('Failed to fetch band information:', fetchError)
+        alert('Failed to fetch band information')
         return
       }
 
@@ -69,10 +80,11 @@ export default function Settings() {
           .eq('id', existingBand.id)
 
         if (updateError) {
-          console.error('バンド名の更新に失敗しました:', updateError)
-          alert('バンド名の更新に失敗しました')
+          console.error('Failed to update band name:', updateError)
+          alert('Failed to update band name')
         } else {
-          alert('バンド名を更新しました')
+          alert('Band name updated')
+          setGlobalBandName(bandName || 'No Band Name')
         }
       } else {
         const { error: insertError } = await supabase
@@ -85,43 +97,53 @@ export default function Settings() {
           ])
 
         if (insertError) {
-          console.error('バンド名の保存に失敗しました:', insertError)
-          alert('バンド名の保存に失敗しました')
+          console.error('Failed to save band name:', insertError)
+          alert('Failed to save band name')
         } else {
-          alert('バンド名を保存しました')
+          alert('Band name saved')
         }
       }
     } catch (error) {
-      console.error('エラーが発生しました:', error)
-      alert('エラーが発生しました')
+      console.error('Error:', error)
+      alert('Error')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="settings">
-      <div className="settingsForm">
-        <h2>バンド設定</h2>
-        <div className="inputGroup">
-          <label htmlFor="bandName">バンド名</label>
-          <input
-            id="bandName"
-            type="text"
-            value={bandName}
-            onChange={(e) => setBandName(e.target.value)}
-            className="input"
-            placeholder="バンド名を入力"
-          />
+    <>
+    <main>
+      <Head>
+        <title>Settings | Setlist Maker</title>
+        <meta name="description" content="Setlist Maker is a tool to create setlists and export them as PDFs." />
+        <link rel="icon" href="favicon.ico" />
+      </Head>
+      <section>
+        <div className="wrapper">
+          <div className="block">
+            <h2>Band Name</h2>
+            <input
+              id="bandName"
+              type="text"
+              value={bandName}
+              onChange={(e) => setBandName(e.target.value)}
+              className="input"
+              placeholder="Enter Band Name"
+            />
+          </div>
+          <div className="block">
+            <button
+              onClick={handleUpdateBandName}
+              disabled={loading}
+              className="submitButton"
+            >
+              {loading ? 'Updating...' : 'Update'}
+            </button>
+          </div>
         </div>
-        <button
-          onClick={handleUpdateBandName}
-          disabled={loading}
-          className="submitButton"
-        >
-          {loading ? '更新中...' : '更新'}
-        </button>
-      </div>
-    </div>
+      </section>
+    </main>
+    </>
   )
 } 
