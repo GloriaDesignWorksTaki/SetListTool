@@ -1,28 +1,31 @@
-import { useState } from "react";
-import Input from "@/components/atoms/form/Input";
-import Submit from "@/components/atoms/form/Submit";
+import React, { useState } from 'react'
+import { Input } from '@/components/atoms/Input'
+import { Button } from '@/components/atoms/Button'
 
-type SongInputProps = {
-  onAddSong: (song: string) => void;
-};
+interface SongInputProps {
+  onAddSong: (song: string) => void
+}
 
-const SongInput = ({ onAddSong }: SongInputProps) => {
-  const [song, setSong] = useState("");
+export const SongInput: React.FC<SongInputProps> = ({ onAddSong }) => {
+  const [song, setSong] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (song.trim()) {
-      onAddSong(song.trim());
-      setSong("");
+      onAddSong(song.trim())
+      setSong('')
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Input value={song} onChange={(e) => setSong(e.target.value)} placeholder="Enter The Song Name" required />
-      <Submit onClick={handleSubmit} text="Add Song" />
+    <form onSubmit={handleSubmit} className="songInput">
+      <Input
+        value={song}
+        onChange={(e) => setSong(e.target.value)}
+        placeholder="Enter Song Title"
+        required={true}
+      />
+      <Button className='submitButton' type="submit" text="Add Song" />
     </form>
-  );
-};
-
-export default SongInput; 
+  )
+} 

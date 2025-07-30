@@ -4,7 +4,7 @@ export default function LoginPage() {
   return (
     <main>
       <Head>
-        <title>Setlist Maker | ログイン</title>
+        <title>login | Setlist Maker</title>
         <meta name="description" content="Setlist Makerのログイン画面です。" />
         <link rel="icon" href="favicon.ico" />
       </Head>
