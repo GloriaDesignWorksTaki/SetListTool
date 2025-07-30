@@ -11,7 +11,7 @@ type MCCardProps = {
 
 export const MCCard: React.FC<MCCardProps> = ({ mc, onRemove }) => {
   return (
-    <div className="mcCard">
+    <div className="mcCard no-select">
       <span className="mcCardTitle">{mc.type}: {mc.title}</span>
     </div>
   );

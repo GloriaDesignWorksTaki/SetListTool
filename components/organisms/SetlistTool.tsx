@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { pdf, Document, Page, Text, View, Font } from '@react-pdf/renderer';
 import { useSession } from "next-auth/react";
@@ -60,6 +60,23 @@ const SetlistTool = () => {
   const [mcInput, setMcInput] = useState("");
   const { data: session } = useSession();
   const { bandName } = useBand();
+
+  // ドラッグ&ドロップ用のセンサー設定
+  const sensors = useSensors(
+    useSensor(TouchSensor, {
+      // タッチ操作の最適化
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(MouseSensor, {
+      // マウス操作の最適化
+      activationConstraint: {
+        distance: 10,
+      },
+    })
+  );
 
   // Setlistをセッションに保存
   const saveSetlistToSession = (newSetlist: SetlistItem[]) => {
@@ -397,7 +414,10 @@ const SetlistTool = () => {
         <div className="block">
           <H2Title title="Setlist" />
           <div className="cardList setlistCardList">
-            <DndContext onDragEnd={handleDragEnd}>
+            <DndContext 
+              sensors={sensors}
+              onDragEnd={handleDragEnd}
+            >
               <SortableContext id="setlist" items={setlist} strategy={verticalListSortingStrategy}>
                 {setlist.map((item, index) => (
                   <SortableItem
