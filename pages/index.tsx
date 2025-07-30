@@ -11,13 +11,18 @@ const Home: NextPage = () => {
   const { data: session, status } = useSession();
 
   useEffect(() => {
+    console.log('Home - Session status:', status);
+    console.log('Home - Session data:', session);
+    
     if (status === "loading") {
       return; // まだローディング中
     }
 
     if (!session) {
+      console.log('Home - No session, redirecting to login');
       router.push("/login");
     } else {
+      console.log('Home - Session found, setting loading to false');
       setLoading(false);
     }
   }, [session, status, router]);

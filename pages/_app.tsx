@@ -11,13 +11,16 @@ import { setSupabaseAuth } from "./api/supabaseClient";
 
 // Supabase認証を設定するコンポーネント
 const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
+    console.log('SupabaseAuthProvider - Session status:', status);
+    console.log('SupabaseAuthProvider - Session data:', session);
+    
     if (session) {
       setSupabaseAuth(session);
     }
-  }, [session]);
+  }, [session, status]);
 
   return <>{children}</>;
 };
@@ -27,7 +30,11 @@ const App = ({ Component, pageProps }: AppProps) => {
   const isLoginPage = router.pathname === '/login';
 
   return (
-    <SessionProvider session={pageProps.session}>
+    <SessionProvider 
+      session={pageProps.session}
+      refetchInterval={5 * 60} // 5分ごとにセッションを更新
+      refetchOnWindowFocus={true} // ウィンドウがフォーカスされたときにセッションを更新
+    >
       <SupabaseAuthProvider>
         <BandProvider>
           {!isLoginPage && <Header />}
