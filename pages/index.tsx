@@ -11,11 +11,16 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push("/login");
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
         router.push("/login");
-      } else {
-        setLoading(false);
       }
     };
     checkSession();

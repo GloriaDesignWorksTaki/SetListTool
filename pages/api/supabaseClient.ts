@@ -8,20 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
     url: supabaseUrl ? 'Set' : 'Missing',
     key: supabaseAnonKey ? 'Set' : 'Missing'
   });
+  throw new Error('Supabase environment variables are not configured. Please create a .env.local file with NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-// 一時的にダミーURLを使用（実際のURLに置き換えてください）
-const fallbackUrl = 'https://example.supabase.co';
-const fallbackKey = 'dummy-key';
-
-export const supabase = createClient(
-  supabaseUrl || fallbackUrl, 
-  supabaseAnonKey || fallbackKey, 
-  {
-    auth: {
-      autoRefreshToken: false, // 一時的に無効化
-      persistSession: false,   // 一時的に無効化
-      detectSessionInUrl: false
-    }
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
   }
-);
+});

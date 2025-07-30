@@ -11,6 +11,10 @@
   --secondary-dark: #b5454f;
   --secondary-light: #e08590;
   --secondary-pale: #ffd0d5;
+  /* Error Color */
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
   /* Other Color */
   --white-color: #ffffff;
   --black-color: #333333;
@@ -48,6 +52,16 @@ section .wrapper {
   margin-bottom: 3rem;
 }
 
+/* Setlist Tool */
+.setlistTool {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.setlistTool > div {
+  width: 100%;
+}
+
 /* Button */
 .button {
   margin-top: 1rem;
@@ -58,6 +72,17 @@ section .wrapper {
   color: #ffffff;
   padding: 1rem 2rem;
   background-color: #000000;
+}
+
+/* Error Message */
+.errorMessage {
+  padding: .5rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+  background-color: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
+  word-break: break-word;
 }
 
 /* Form Parts */
