@@ -11,6 +11,7 @@ import Date from "@/components/atoms/form/Date";
 import Input from "@/components/atoms/form/Input";
 import Submit from "@/components/atoms/form/Submit";
 import { supabase } from "@/pages/api/supabaseClient";
+import { useBand } from "@/contexts/BandContext";
 
 type SetlistItem = {
   id: string;
@@ -55,10 +56,10 @@ const SetlistTool = () => {
   const [setlist, setSetlist] = useState<SetlistItem[]>([]);
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
-  const [name, setName] = useState("");
   const [eventTitle, setEventTitle] = useState("");
   const [mcInput, setMcInput] = useState("");
   const { data: session } = useSession();
+  const { bandName } = useBand();
 
   // Setlistをセッションに保存
   const saveSetlistToSession = (newSetlist: SetlistItem[]) => {
@@ -361,7 +362,7 @@ const SetlistTool = () => {
 
   const openPDFPreview = async () => {
     const blob = await pdf(
-      <MyDocument name={name} date={date} venue={venue} setlist={setlist} eventTitle={eventTitle} />
+      <MyDocument name={bandName} date={date} venue={venue} setlist={setlist} eventTitle={eventTitle} />
     ).toBlob();
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
