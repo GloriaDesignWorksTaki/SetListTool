@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { supabase } from "@/pages/api/supabaseClient"
 import { useRouter } from 'next/router'
+import { signOut } from 'next-auth/react'
 import { useBand } from '@/contexts/BandContext'
 
 const Header: React.FC = () => {
@@ -10,12 +10,8 @@ const Header: React.FC = () => {
   const { bandName, loading } = useBand()
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error('Logout error:', error.message)
-    } else {
-      router.push('/login')
-    }
+    await signOut({ redirect: false })
+    router.push('/login')
   }
 
   return (

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { supabase } from '@/pages/api/supabaseClient'
 
 interface BandContextType {
@@ -22,6 +23,7 @@ export const useBand = () => {
 export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [bandName, setBandName] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const { data: session } = useSession()
 
   // ローカルストレージからバンド名を取得
   useEffect(() => {
@@ -35,9 +37,7 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchBandName = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (!user) {
+        if (!session?.user?.id) {
           setLoading(false)
           return
         }
@@ -45,7 +45,7 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: band, error } = await supabase
           .from('bands')
           .select('name')
-          .eq('user_id', user.id)
+          .eq('user_id', session.user.id)
           .maybeSingle()
 
         if (error) {
@@ -69,7 +69,7 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     fetchBandName()
-  }, [])
+  }, [session])
 
   const updateBandName = (name: string) => {
     setBandName(name)

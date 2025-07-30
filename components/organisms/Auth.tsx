@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/pages/api/supabaseClient'
 import { useRouter } from 'next/router'
+import { signIn, signOut, useSession } from 'next-auth/react'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true)
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const { data: session } = useSession()
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -23,25 +25,26 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        // ログイン
-        const { data, error } = await supabase.auth.signInWithPassword({
+        // NextAuthを使用してログイン
+        const result = await signIn('credentials', {
           email,
-          password
+          password,
+          redirect: false,
         })
 
-        if (error) {
-          if (error.message.includes('Email not confirmed')) {
+        if (result?.error) {
+          if (result.error.includes('Email not confirmed')) {
             setMessage('メール確認が必要です。メールを確認してください。')
-          } else if (error.message.includes('Invalid login credentials')) {
+          } else if (result.error.includes('Invalid login credentials')) {
             setMessage('メールアドレスまたはパスワードが正しくありません')
           } else {
-            setMessage(`ログインエラー: ${error.message}`)
+            setMessage(`ログインエラー: ${result.error}`)
           }
-        } else if (data.user) {
+        } else if (result?.ok) {
           router.push('/')
         }
       } else {
-        // サインアップ
+        // Supabaseを使用してサインアップ（NextAuthはサインアップをサポートしていないため）
         const { data, error } = await supabase.auth.signUp({
           email,
           password
@@ -63,6 +66,25 @@ export default function Auth() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false })
+    router.push('/login')
+  }
+
+  if (session) {
+    return (
+      <div className="auth">
+        <div className="authForm">
+          <h2>ログイン済み</h2>
+          <p>ようこそ、{session.user?.email}さん</p>
+          <button onClick={handleSignOut} className="submitButton">
+            ログアウト
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

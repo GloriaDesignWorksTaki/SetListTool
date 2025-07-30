@@ -2,31 +2,27 @@ import React, { useEffect, useState } from "react";
 import { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { supabase } from "@/pages/api/supabaseClient";
+import { useSession } from "next-auth/react";
 import SetlistTool from "@/components/organisms/SetlistTool";
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          router.push("/login");
-        } else {
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Session check error:', error);
-        router.push("/login");
-      }
-    };
-    checkSession();
-  }, []);
+    if (status === "loading") {
+      return; // まだローディング中
+    }
 
-  if (loading) return <div>読み込み中...</div>;
+    if (!session) {
+      router.push("/login");
+    } else {
+      setLoading(false);
+    }
+  }, [session, status, router]);
+
+  if (loading || status === "loading") return <div>読み込み中...</div>;
 
   return (
     <main>

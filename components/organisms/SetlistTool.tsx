@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { pdf, Document, Page, Text, View, Font } from '@react-pdf/renderer';
+import { useSession } from "next-auth/react";
 import { SongInput } from "@/components/molecules/SongInput";
 import { SortableItem } from "@/components/molecules/SortableItem";
 import SongCard from "@/components/atoms/SongCard";
@@ -16,6 +17,11 @@ type SetlistItem = {
   type: 'song' | 'mc';
   content: string;
   order: number;
+};
+
+type Song = {
+  id: string;
+  title: string;
 };
 
 const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; date: string; venue: string; setlist: SetlistItem[]; eventTitle: string }) => (
@@ -45,38 +51,195 @@ const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; 
 );
 
 const SetlistTool = () => {
-  const [songs, setSongs] = useState<string[]>([]);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [setlist, setSetlist] = useState<SetlistItem[]>([]);
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
   const [name, setName] = useState("");
   const [eventTitle, setEventTitle] = useState("");
   const [mcInput, setMcInput] = useState("");
+  const { data: session } = useSession();
+
+  // Setlistをセッションに保存
+  const saveSetlistToSession = (newSetlist: SetlistItem[]) => {
+    if (session?.user?.id) {
+      sessionStorage.setItem(`setlist_${session.user.id}`, JSON.stringify(newSetlist));
+    }
+  };
+
+  // セッションからSetlistを復元
+  const restoreSetlistFromSession = () => {
+    if (session?.user?.id) {
+      const savedSetlist = sessionStorage.getItem(`setlist_${session.user.id}`);
+      if (savedSetlist) {
+        try {
+          const parsedSetlist = JSON.parse(savedSetlist);
+          setSetlist(parsedSetlist);
+        } catch (error) {
+          console.error('Setlist復元エラー:', error);
+        }
+      }
+    }
+  };
+
+  // データベースから曲を読み込み
+  const loadSongsFromDB = async () => {
+    try {
+      const bandId = await getCurrentBandId()
+      console.log('読み込み対象のバンドID:', bandId)
+      
+      if (!bandId) {
+        console.log('バンドIDが見つからないため、データベースからの読み込みをスキップ')
+        return
+      }
+
+      const { data: songs, error } = await supabase
+        .from("songs")
+        .select('id, title, band_id')
+        .eq('band_id', bandId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error("Supabase select error:", error.message);
+        return
+      }
+
+      console.log('データベースから取得した曲:', songs)
+      
+      if (songs && songs.length > 0) {
+        setSongs(songs);
+        updateLocalStorage(songs);
+      }
+    } catch (error) {
+      console.error("曲の読み込みエラー:", error);
+    }
+  };
 
   useEffect(() => {
+    // まずローカルストレージから読み込み
     const savedSongs = localStorage.getItem("songs");
     if (savedSongs) {
-      setSongs(JSON.parse(savedSongs));
+      try {
+        const parsedSongs = JSON.parse(savedSongs);
+        // 古い形式（文字列配列）の場合は新しい形式に変換
+        if (Array.isArray(parsedSongs) && typeof parsedSongs[0] === 'string') {
+          const convertedSongs = parsedSongs.map((title, index) => ({
+            id: `local_${index}`,
+            title
+          }));
+          setSongs(convertedSongs);
+        } else {
+          setSongs(parsedSongs);
+        }
+      } catch (error) {
+        console.error('ローカルストレージからの読み込みエラー:', error);
+      }
     }
-  }, []);
+    
+    // 次にデータベースから読み込み（上書き）
+    loadSongsFromDB();
+    restoreSetlistFromSession(); // セッションからSetlistを復元
+  }, [session]); // sessionが変更されたときに再実行
 
-  const updateLocalStorage = (updatedSongs: string[]) => {
+  const updateLocalStorage = (updatedSongs: Song[]) => {
     localStorage.setItem("songs", JSON.stringify(updatedSongs));
   };
 
+  // 現在のユーザーのバンドIDを取得
+  const getCurrentBandId = async () => {
+    try {
+      console.log('getCurrentBandId開始')
+      console.log('セッション情報:', session)
+      
+      if (!session?.user?.id) {
+        console.log('セッションからユーザーIDを取得できません')
+        return null
+      }
+
+      console.log('現在のユーザー:', session.user.id, session.user.email)
+      
+      const { data: band, error } = await supabase
+        .from('bands')
+        .select('id, name')
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+
+      console.log('Supabaseクエリ結果:', { band, error })
+
+      if (error) {
+        console.error('バンドID取得エラー:', error)
+        return null
+      }
+
+      // バンドが存在しない場合は作成
+      if (!band) {
+        console.log('バンドが存在しないため、新しく作成します')
+        const { data: newBand, error: createError } = await supabase
+          .from('bands')
+          .insert([{ 
+            user_id: session.user.id, 
+            name: 'My Band' 
+          }])
+          .select('id, name')
+          .single()
+
+        if (createError) {
+          console.error('バンド作成エラー:', createError)
+          return null
+        }
+
+        console.log('新しく作成したバンド:', newBand)
+        return newBand?.id || null
+      }
+
+      console.log('取得したバンド:', band)
+      return band?.id || null
+    } catch (error) {
+      console.error('バンドID取得エラー:', error)
+      console.log('ネットワークエラーのため、ローカルモードで動作します')
+      return null
+    }
+  }
+
   // Supabaseへの登録処理
   const addSongToDB = async (title: string) => {
-    const bandId = "example-band-id"; // ← ここを実際のband_idに置き換える
-    const { error } = await supabase.from("songs").insert([{ title, band_id: bandId }]);
+    try {
+      console.log('addSongToDB開始:', title)
+      const bandId = await getCurrentBandId()
+      console.log('取得したバンドID:', bandId)
+      
+      if (!bandId) {
+        console.error('バンドIDが見つかりません。先にバンド名を設定してください。')
+        return
+      }
 
-    if (error) {
-      console.error("Supabase insert error:", error.message);
+      console.log('データベースに挿入するデータ:', { title, band_id: bandId })
+      const { data, error } = await supabase.from("songs").insert([{ title, band_id: bandId }]).select('id, title');
+
+      if (error) {
+        console.error("Supabase insert error:", error.message);
+        console.error("エラー詳細:", error)
+      } else {
+        console.log("曲をデータベースに保存しました:", title);
+        console.log("挿入されたデータ:", data)
+        // 新しく追加された曲をsongs状態に追加
+        if (data && data[0]) {
+          setSongs(prev => [...prev, data[0]]);
+        }
+      }
+    } catch (error) {
+      console.error("曲の保存エラー:", error);
     }
   };
 
   const addSong = (song: string) => {
+    const newSong: Song = {
+      id: `local_${performance.now()}`,
+      title: song
+    };
+    
     setSongs((prev) => {
-      const updatedSongs = [...prev, song];
+      const updatedSongs = [...prev, newSong];
       updateLocalStorage(updatedSongs);
       return updatedSongs;
     });
@@ -84,48 +247,77 @@ const SetlistTool = () => {
     addSongToDB(song); // ← Supabaseに保存
   };
 
+  // データベースから曲を削除
+  const deleteSongFromDB = async (title: string) => {
+    try {
+      const bandId = await getCurrentBandId()
+      
+      if (!bandId) {
+        console.error('バンドIDが見つかりません')
+        return
+      }
+
+      const { error } = await supabase
+        .from("songs")
+        .delete()
+        .eq('title', title)
+        .eq('band_id', bandId);
+
+      if (error) {
+        console.error("Supabase delete error:", error.message);
+      } else {
+        console.log("曲をデータベースから削除しました:", title);
+      }
+    } catch (error) {
+      console.error("曲の削除エラー:", error);
+    }
+  };
+
   const handleDeleteSong = (songToDelete: string) => {
     setSongs((prev) => {
-      const updatedSongs = prev.filter((song) => song !== songToDelete);
+      const updatedSongs = prev.filter((song) => song.title !== songToDelete);
       updateLocalStorage(updatedSongs);
       return updatedSongs;
     });
+
+    deleteSongFromDB(songToDelete); // ← Supabaseから削除
   };
 
   const handleAddToSetlist = (songToAdd: string) => {
-    const newItem: SetlistItem = {
-      id: `song-${performance.now()}`,
-      type: 'song',
-      content: songToAdd,
-      order: setlist.filter(item => item.type === 'song').length + 1
-    };
-    setSetlist((prev) => [...prev, newItem]);
-    setSongs((prev) => prev.filter((song) => song !== songToAdd));
+    setSetlist((prev) => {
+              const newSetlist: SetlistItem[] = [...prev, {
+          id: `song_${performance.now()}`,
+          type: 'song' as const,
+          content: songToAdd,
+          order: prev.filter(item => item.type === 'song').length + 1
+        }];
+      saveSetlistToSession(newSetlist);
+      return newSetlist;
+    });
   };
 
   const handleAddMC = () => {
     if (mcInput.trim()) {
-      const newItem: SetlistItem = {
-        id: `mc-${performance.now()}`,
-        type: 'mc',
-        content: mcInput.trim(),
-        order: 0
-      };
-      setSetlist((prev) => [...prev, newItem]);
+      setSetlist((prev) => {
+        const newSetlist: SetlistItem[] = [...prev, {
+          id: `mc_${performance.now()}`,
+          type: 'mc' as const,
+          content: mcInput,
+          order: 0
+        }];
+        saveSetlistToSession(newSetlist);
+        return newSetlist;
+      });
       setMcInput("");
     }
   };
 
   const handleRemoveFromSetlist = (id: string) => {
-    const itemToRemove = setlist.find(item => item.id === id);
-    if (itemToRemove?.type === 'song') {
-      setSongs((prev) => [...prev, itemToRemove.content]);
-    }
     setSetlist((prev) => {
-      const updatedSetlist = prev.filter(item => item.id !== id);
-      // 曲の順番を更新（MCカードを除いて計算）
+      const newSetlist = prev.filter(item => item.id !== id);
+      // 曲の順番を再計算
       let songCount = 0;
-      return updatedSetlist.map((item) => {
+      const updatedSetlist = newSetlist.map(item => {
         if (item.type === 'song') {
           songCount++;
           return {
@@ -135,23 +327,23 @@ const SetlistTool = () => {
         }
         return item;
       });
+      saveSetlistToSession(updatedSetlist);
+      return updatedSetlist;
     });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = setlist.findIndex(item => item.id === active.id);
-    const newIndex = setlist.findIndex(item => item.id === over.id);
-
-    if (oldIndex !== -1 && newIndex !== -1) {
+    if (over && active.id !== over.id) {
       setSetlist((prev) => {
-        const updatedSetlist = arrayMove(prev, oldIndex, newIndex);
-        // 曲の順番を更新（MCカードを除いて計算）
+        const oldIndex = prev.findIndex(item => item.id === active.id);
+        const newIndex = prev.findIndex(item => item.id === over.id);
+        const newSetlist = arrayMove(prev, oldIndex, newIndex);
+        
+        // 曲の順番を再計算
         let songCount = 0;
-        return updatedSetlist.map((item) => {
+        const updatedSetlist = newSetlist.map(item => {
           if (item.type === 'song') {
             songCount++;
             return {
@@ -161,6 +353,8 @@ const SetlistTool = () => {
           }
           return item;
         });
+        saveSetlistToSession(updatedSetlist);
+        return updatedSetlist;
       });
     }
   };
@@ -185,9 +379,9 @@ const SetlistTool = () => {
           <div className="cardList">
             {songs.map((song) => (
               <SongCard 
-                key={song} 
-                id={song} 
-                song={song} 
+                key={song.id} 
+                id={song.id} 
+                song={song.title} 
                 onDelete={handleDeleteSong} 
                 onAddToSetlist={handleAddToSetlist} 
                 buttonLabel="Add Setlist"

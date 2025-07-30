@@ -18,3 +18,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   }
 });
+
+// NextAuthのセッションからSupabaseクライアントを認証状態にする関数
+export const setSupabaseAuth = (session: any) => {
+  if (session?.accessToken) {
+    // NextAuthのセッションからSupabaseのアクセストークンを設定
+    supabase.auth.setSession({
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken || '',
+    });
+  }
+};
