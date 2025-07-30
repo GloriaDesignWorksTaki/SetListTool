@@ -30,6 +30,7 @@ export const SortableItem = ({
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id });
 
   const style = {
@@ -42,9 +43,9 @@ export const SortableItem = ({
   };
 
   return (
-    <div className="sortableItem">
+    <div className={`sortableItem no-select ${isDragging ? 'dragging' : ''}`}>
       {order !== undefined && <span className="sortableItemOrder">{isMC ? 'MC' : order}</span>}
-      <div className="sortableItemContent" ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <div className={`sortableItemContent no-select draggable ${isDragging ? 'dragging' : ''}`} ref={setNodeRef} style={style} {...attributes} {...listeners}>
         {isMC ? (
           <MCCard
             mc={{

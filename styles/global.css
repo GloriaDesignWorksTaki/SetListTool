@@ -24,6 +24,60 @@
 /* Global */
 html, body {
   overscroll-behavior-x: none !important;
+  overscroll-behavior-y: none !important;
+  /* ドラッグ時の画面移動防止 */
+  touch-action: manipulation;
+}
+
+/* スマホでのズーム防止 */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* 文字選択防止（ドラッグ&ドロップ用） */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ドラッグ&ドロップ専用のタッチ制御 */
+.draggable {
+  touch-action: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* ドラッグ中のスタイル */
+.dragging {
+  touch-action: none !important;
+  pointer-events: none;
+  z-index: 1000;
+  position: relative;
+}
+
+/* ドラッグ中の子要素も制御 */
+.dragging * {
+  touch-action: none !important;
+  pointer-events: none;
+}
+
+/* ドラッグ中のbody制御 */
+body.dragging {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+/* ドラッグ中のhtml制御 */
+html.dragging {
+  overflow: hidden !important;
+  touch-action: none !important;
 }
 
 /* Title */
@@ -93,6 +147,11 @@ section .wrapper {
   border: none;
   background-color: var(--gray-color);
   margin-top: 1rem;
+  /* スマホでのズーム防止 */
+  font-size: 16px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 .submitButton {
   background-color: var(--primary-color);
@@ -104,6 +163,7 @@ section .wrapper {
   cursor: pointer;
   margin-top: 1rem;
   transition: background-color 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 .submitButton:hover {
   background-color: var(--primary-dark);
@@ -123,6 +183,8 @@ section .wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  line-height: normal;
+  -webkit-tap-highlight-color: transparent;
 }
 .mcCard {
   background-color: var(--secondary-pale);
@@ -147,6 +209,7 @@ section .wrapper {
   border: none;
   border-radius: 5px;
   transition: background-color 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 .songCardDelete:hover,
 .RemoveFromSetlistButton:hover,
@@ -179,6 +242,14 @@ section .wrapper {
   display: flex;
   align-items: center;
   gap: .5rem;
+  /* ドラッグ&ドロップ時の文字選択防止 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+
 }
 .sortableItem:hover {
   cursor: grabbing; /* ドラッグ中のカーソル */
@@ -189,9 +260,16 @@ section .wrapper {
   color: var(--white-color);
   padding: .75rem 1rem;
   border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
 }
 .sortableItem .sortableItemSongCard {
   flex-grow: 1;
+}
+.sortableItem .RemoveFromSetlistButton {
+  flex-shrink: 0;
 }
 
 /* Auth */
@@ -212,6 +290,9 @@ section .wrapper {
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
 }
 .auth .signUpButton:hover {
   color: var(--primary-dark);
@@ -225,6 +306,7 @@ header {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 header h1 {
   flex-grow: 1;
@@ -236,11 +318,15 @@ header nav ul {
 header nav ul li a {
   text-decoration: none;
   color: var(--white-color);
+  display: flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
 }
 header .headerContent {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 header .bandName {
   font-size: .825rem;
@@ -261,6 +347,7 @@ footer .copy {
   text-align: center;
 }
 
+/* スマホ対応 */
 @media (max-width: 768px) {
   .setlistContent {
     flex-direction: column;
@@ -269,14 +356,39 @@ footer .copy {
     width: 100%;
   }
 
-  /* SongCard, MCCard */
-  .songCard .songCardTitle, .mcCard .mcCardTitle {
-    line-height: normal;
+  .songCard,
+  .mcCard,
+  .sortableItem {
+    touch-action: pan-y;
   }
-}
+  .sortableItem .RemoveFromSetlistButton {
+    margin-left: 0;
+  }
+  .sortableItem * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  .sortableItem .sortableItemOrder {
+    padding: .5rem .625rem;
+  }
 
-@media (max-width: 480px) {
   section {
     padding: 1rem;
+  }
+
+  /* スマホでの入力フィールド最適化 */
+  .input {
+    font-size: 16px;
+    padding: 0.75rem;
+  }
+
+  /* ボタンのタッチ領域を拡大 */
+  .submitButton,
+  .songCardDelete,
+  .RemoveFromSetlistButton,
+  .AddToSetlistButton {
+    padding: 0.5rem .75rem;
   }
 }

@@ -17,14 +17,14 @@ type SongCardProps = {
 }
 
 const SongCard: React.FC<SongCardProps> = memo(({ song, onDelete, onAddToSetlist, isInSetlist, buttonLabel, id, index, showIndex }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="songCard"
+      className={`songCard no-select draggable ${isDragging ? 'dragging' : ''}`}
     >
       {showIndex && index !== undefined ? <span>{index + 1}. </span> : null}
       <span className="songCardTitle">{song}</span>
