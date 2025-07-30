@@ -2,7 +2,6 @@
 
 import React, { memo } from "react"
 import { useSortable } from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
 
 type SongCardProps = {
   song: string;

@@ -1,18 +1,30 @@
 "use client"
 
-import React from "react";
+import React from 'react'
 
 interface ButtonProps {
-  href: string;
-  text: string;
+  type?: 'button' | 'submit' | 'reset'
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+  text: string
 }
 
-const Button: React.FC<ButtonProps> = ({ href, text }) => {
+export const Button: React.FC<ButtonProps> = ({
+  type = 'button',
+  onClick,
+  disabled = false,
+  className = '',
+  text
+}) => {
   return (
-    <div className="button">
-      <a href={href}>{text}</a>
-    </div>
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`button ${className}`}
+    >
+      {text}
+    </button>
   )
 }
-
-export default Button;
