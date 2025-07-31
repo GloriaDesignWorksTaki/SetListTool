@@ -456,18 +456,52 @@ const SetlistTool = () => {
   };
 
   const openPDFPreview = async () => {
-    const blob = await pdf(
-      <MyDocument 
-        name={bandName} 
-        date={date} 
-        venue={venue} 
-        setlist={setlist} 
-        eventTitle={eventTitle}
-        logoUrl={logoUrl}
-      />
-    ).toBlob();
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    try {
+      const blob = await pdf(
+        <MyDocument 
+          name={bandName} 
+          date={date} 
+          venue={venue} 
+          setlist={setlist} 
+          eventTitle={eventTitle}
+          logoUrl={logoUrl}
+        />
+      ).toBlob();
+      
+      // スマホ対応のPDFプレビュー
+      const url = URL.createObjectURL(blob);
+      
+      // デバイス判定
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // スマホの場合はダウンロードを促す
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `setlist_${date || 'today'}.pdf`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // トースト通知
+        setToastMessage('PDFをダウンロードしました。ファイルアプリで確認してください。');
+        setIsToastVisible(true);
+      } else {
+        // デスクトップの場合は新しいタブで開く
+        window.open(url, '_blank');
+      }
+      
+      // メモリリーク防止のため、少し遅延してからURLを解放
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('PDF生成エラー:', error);
+      setToastMessage('PDFの生成に失敗しました');
+      setIsToastVisible(true);
+    }
   };
 
   return (
@@ -550,7 +584,7 @@ const SetlistTool = () => {
           <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter Venue" required />
         </div>
         <div className="block">
-          <Submit onClick={openPDFPreview} text="Preview PDF" />
+          <Submit onClick={openPDFPreview} text="Generate PDF" />
         </div>
       </div>
     </div>
