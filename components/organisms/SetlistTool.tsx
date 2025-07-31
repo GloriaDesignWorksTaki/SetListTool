@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
-import { pdf, Document, Page, Text, View, Font } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, Image } from '@react-pdf/renderer';
 import { useSession } from "next-auth/react";
 import { SongInput } from "@/components/molecules/SongInput";
 import { SortableItem } from "@/components/molecules/SortableItem";
@@ -11,6 +11,7 @@ import Date from "@/components/atoms/form/Date";
 import Input from "@/components/atoms/form/Input";
 import Submit from "@/components/atoms/form/Submit";
 import { Toast } from "@/components/atoms/Toast";
+import { LogoUpload } from "@/components/atoms/LogoUpload";
 import { supabase } from "@/pages/api/supabaseClient";
 import { useBand } from "@/contexts/BandContext";
 
@@ -26,14 +27,41 @@ type Song = {
   title: string;
 };
 
-const MyDocument = ({ name, date, venue, setlist, eventTitle }: { name: string; date: string; venue: string; setlist: SetlistItem[]; eventTitle: string }) => (
+const MyDocument = ({ name, date, venue, setlist, eventTitle, logoUrl }: { name: string; date: string; venue: string; setlist: SetlistItem[]; eventTitle: string; logoUrl?: string }) => (
   <Document>
     <Page size="A4" style={{ padding: 15 }}>
       <div style={{ backgroundColor: 'black', padding: 30, height: '100%' }}>
-        <Text style={{ fontSize: 40, textAlign: 'center', marginBottom: 10, color: 'white' }}>{name}</Text>
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{date}</Text>
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{eventTitle}</Text>
-        <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 40, color: 'white' }}>{venue}</Text>
+        {/* ロゴまたはバンド名のヘッダー */}
+        <View style={{ 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          marginBottom: 5,
+          marginTop: 0
+        }}>
+          {logoUrl ? (
+            <Image 
+              src={logoUrl} 
+              style={{ 
+                width: 'auto', 
+                height: 50, 
+                objectFit: 'contain'
+              }} 
+            />
+          ) : (
+            <Text style={{ 
+              fontSize: 40, 
+              textAlign: 'center', 
+              color: 'white'
+            }}>
+              {name}
+            </Text>
+          )}
+        </View>
+        
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 5, color: 'white' }}>{date}</Text>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 5, color: 'white' }}>{eventTitle}</Text>
+        <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 20, color: 'white' }}>{venue}</Text>
         {setlist.map((item, index) => (
           <Text 
             key={item.id} 
@@ -61,6 +89,7 @@ const SetlistTool = () => {
   const [mcInput, setMcInput] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [isToastVisible, setIsToastVisible] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
   const { data: session } = useSession();
   const { bandName } = useBand();
 
@@ -160,11 +189,42 @@ const SetlistTool = () => {
     // 次にデータベースから読み込み（上書き）
     loadSongsFromDB();
     restoreSetlistFromSession(); // セッションからSetlistを復元
+    loadLogo(); // ロゴを読み込み
   }, [session]); // sessionが変更されたときに再実行
 
   const updateLocalStorage = (updatedSongs: Song[]) => {
     localStorage.setItem("songs", JSON.stringify(updatedSongs));
   };
+
+  // ロゴを取得
+  const loadLogo = async () => {
+    try {
+      const bandId = await getCurrentBandId()
+      if (!bandId) return
+
+      const { data: band, error } = await supabase
+        .from('bands')
+        .select('logo_url')
+        .eq('id', bandId)
+        .single()
+
+      if (error) {
+        // logo_urlカラムが存在しない場合は無視
+        if (error.code === '42703') {
+          console.log('logo_urlカラムが存在しません。データベースにカラムを追加してください。')
+          return
+        }
+        console.error('ロゴ取得エラー:', error)
+        return
+      }
+
+      if (band?.logo_url) {
+        setLogoUrl(band.logo_url)
+      }
+    } catch (error) {
+      console.error('ロゴ取得エラー:', error)
+    }
+  }
 
   // 現在のユーザーのバンドIDを取得
   const getCurrentBandId = async () => {
@@ -397,7 +457,14 @@ const SetlistTool = () => {
 
   const openPDFPreview = async () => {
     const blob = await pdf(
-      <MyDocument name={bandName} date={date} venue={venue} setlist={setlist} eventTitle={eventTitle} />
+      <MyDocument 
+        name={bandName} 
+        date={date} 
+        venue={venue} 
+        setlist={setlist} 
+        eventTitle={eventTitle}
+        logoUrl={logoUrl}
+      />
     ).toBlob();
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');

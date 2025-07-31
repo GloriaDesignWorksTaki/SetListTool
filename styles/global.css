@@ -319,6 +319,63 @@ section .wrapper {
   opacity: 0;
 }
 
+/* Logo Upload */
+.logoUpload {
+  margin-bottom: 2rem;
+}
+.logoUpload h3 {
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+.logoUploadArea {
+  border: 2px dashed var(--primary-color);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: var(--primary-pale);
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logoUploadArea:hover {
+  border-color: var(--primary-dark);
+  background-color: var(--white-color);
+}
+.logoUploadArea.dragging {
+  border-color: var(--accent-color);
+  background-color: var(--accent-color);
+  color: var(--white-color);
+}
+.logoUploadArea.hasLogo {
+  border-style: solid;
+  background-color: var(--white-color);
+}
+.logoPreview {
+  position: relative;
+  display: inline-block;
+}
+.logoPreview img {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+.logoUploadPlaceholder {
+  color: var(--text-color);
+}
+.uploadIcon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.uploadHint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
 /* Header */
 header {
   padding: 1.5rem 1rem;

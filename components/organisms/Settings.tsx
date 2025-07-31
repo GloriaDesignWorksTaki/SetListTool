@@ -5,9 +5,11 @@ import { supabase } from '@/pages/api/supabaseClient'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
+import { LogoUpload } from '@/components/atoms/LogoUpload'
 
 export default function Settings() {
   const [bandName, setBandName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { setBandName: setGlobalBandName } = useBand()
@@ -23,7 +25,7 @@ export default function Settings() {
 
         const { data: band, error } = await supabase
           .from('bands')
-          .select('name')
+          .select('name, logo_url')
           .eq('user_id', user.id)
           .maybeSingle()
         
@@ -39,9 +41,11 @@ export default function Settings() {
 
         if (band) {
           setBandName(band.name || '')
+          setLogoUrl(band.logo_url || '')
         } else {
           // バンドデータが存在しない場合は空文字を設定
           setBandName('')
+          setLogoUrl('')
         }
       } catch (error) {
         console.error('エラーが発生しました:', error)
@@ -76,7 +80,10 @@ export default function Settings() {
       if (existingBand) {
         const { error: updateError } = await supabase
           .from('bands')
-          .update({ name: bandName })
+          .update({ 
+            name: bandName,
+            logo_url: logoUrl
+          })
           .eq('id', existingBand.id)
 
         if (updateError) {
@@ -92,7 +99,8 @@ export default function Settings() {
           .insert([
             {
               user_id: user.id,
-              name: bandName
+              name: bandName,
+              logo_url: logoUrl
             }
           ])
 
@@ -130,6 +138,18 @@ export default function Settings() {
               onChange={(e) => setBandName(e.target.value)}
               className="input"
               placeholder="Enter Band Name"
+            />
+          </div>
+          <div className="block">
+            <LogoUpload 
+              onLogoUpload={(url) => {
+                setLogoUrl(url)
+                // ロゴがアップロードされたら即座に保存
+                if (url) {
+                  handleUpdateBandName()
+                }
+              }}
+              currentLogo={logoUrl}
             />
           </div>
           <div className="block">
