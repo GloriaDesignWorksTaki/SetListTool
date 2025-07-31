@@ -242,7 +242,6 @@ section .wrapper {
   display: flex;
   align-items: center;
   gap: .5rem;
-  /* ドラッグ&ドロップ時の文字選択防止 */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -298,6 +297,28 @@ section .wrapper {
   color: var(--primary-dark);
 }
 
+/* toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--secondary-light);
+  color: var(--white-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  z-index: 1000;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toast-exit {
+  animation: slideUp 0.3s ease-in forwards;
+  transform: translateX(-50%) translateY(-20px);
+  opacity: 0;
+}
+
 /* Header */
 header {
   padding: 1.5rem 1rem;
@@ -347,7 +368,7 @@ footer .copy {
   text-align: center;
 }
 
-/* スマホ対応 */
+/* SmartPhone Responsive */
 @media (max-width: 768px) {
   .setlistContent {
     flex-direction: column;
@@ -374,21 +395,44 @@ footer .copy {
     padding: .5rem .625rem;
   }
 
+  /* Section Common */
   section {
     padding: 1rem;
   }
 
-  /* スマホでの入力フィールド最適化 */
+  /* Input */
   .input {
     font-size: 16px;
     padding: 0.75rem;
   }
 
-  /* ボタンのタッチ領域を拡大 */
+  /* Button */
   .submitButton,
   .songCardDelete,
   .RemoveFromSetlistButton,
   .AddToSetlistButton {
     padding: 0.5rem .75rem;
+  }
+}
+
+/* Animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.95);
   }
 }
