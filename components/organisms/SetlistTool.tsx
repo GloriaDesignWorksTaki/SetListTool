@@ -27,16 +27,16 @@ type Song = {
   title: string;
 };
 
+// PDF Document
 const MyDocument = ({ name, date, venue, setlist, eventTitle, logoUrl }: { name: string; date: string; venue: string; setlist: SetlistItem[]; eventTitle: string; logoUrl?: string }) => (
   <Document>
     <Page size="A4" style={{ padding: 15 }}>
       <div style={{ backgroundColor: 'black', padding: 30, height: '100%' }}>
-        {/* ロゴまたはバンド名のヘッダー */}
         <View style={{ 
           flexDirection: 'row', 
           alignItems: 'center', 
           justifyContent: 'center',
-          marginBottom: 5,
+          marginBottom: 10,
           marginTop: 0
         }}>
           {logoUrl ? (
@@ -59,15 +59,15 @@ const MyDocument = ({ name, date, venue, setlist, eventTitle, logoUrl }: { name:
           )}
         </View>
         
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 5, color: 'white' }}>{date}</Text>
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 5, color: 'white' }}>{eventTitle}</Text>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{date}</Text>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{eventTitle}</Text>
         <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 20, color: 'white' }}>{venue}</Text>
         {setlist.map((item, index) => (
           <Text 
             key={item.id} 
             style={{ 
               fontSize: 30, 
-              marginBottom: 10, 
+              marginBottom: 15, 
               color: 'white',
               padding: item.type === 'mc' ? 5 : 0
             }}
