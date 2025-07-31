@@ -351,24 +351,20 @@ section .wrapper {
 }
 .logoUploadArea.hasLogo {
   border-style: solid;
-  background-color: var(--white-color);
+  background-color: var(--primary-light);
 }
 .logoPreview {
   position: relative;
   display: inline-block;
 }
 .logoPreview img {
-  max-width: 100px;
-  max-height: 100px;
+  width: 100%;
+  max-width: 800px;
   object-fit: contain;
   border-radius: 4px;
 }
 .logoUploadPlaceholder {
   color: var(--text-color);
-}
-.uploadIcon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
 }
 .uploadHint {
   font-size: 0.875rem;
@@ -399,6 +395,10 @@ header nav ul li a {
   display: flex;
   align-items: center;
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.3s ease;
+}
+header nav ul li a:hover {
+  color: var(--primary-light);
 }
 header .headerContent {
   display: flex;

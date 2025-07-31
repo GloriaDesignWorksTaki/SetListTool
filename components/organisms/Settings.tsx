@@ -40,7 +40,7 @@ export default function Settings() {
           return
         }
 
-        if (band) {
+                if (band) {
           setBandName(band.name || '')
           setLogoUrl(band.logo_url || '')
           setLogoIsLight(false) // 一時的にfalseに設定
@@ -52,6 +52,10 @@ export default function Settings() {
         }
       } catch (error) {
         console.error('エラーが発生しました:', error)
+        // エラー時も初期化
+        setBandName('')
+        setLogoUrl('')
+        setLogoIsLight(false)
       }
     }
     fetchBand()
@@ -81,6 +85,7 @@ export default function Settings() {
       }
 
       if (existingBand) {
+        console.log('バンド更新:', { name: bandName, logo_url: logoUrl })
         const { error: updateError } = await supabase
           .from('bands')
           .update({ 
@@ -93,7 +98,7 @@ export default function Settings() {
           console.error('Failed to update band name:', updateError)
           alert('Failed to update band name')
         } else {
-          alert('Band name updated')
+          alert('Settings updated')
           setGlobalBandName(bandName || 'No Band Name')
         }
       } else {
@@ -146,10 +151,14 @@ export default function Settings() {
           <div className="block">
             <LogoUpload 
               onLogoUpload={(url) => {
+                console.log('ロゴアップロード:', url)
                 setLogoUrl(url)
                 // ロゴがアップロードされたら即座に保存
                 if (url) {
-                  handleUpdateBandName()
+                  // 状態更新を待ってから保存
+                  setTimeout(() => {
+                    handleUpdateBandName()
+                  }, 100)
                 }
               }}
               currentLogo={logoUrl}

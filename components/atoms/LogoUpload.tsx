@@ -9,12 +9,14 @@ interface LogoUploadProps {
 
 export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLogo }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(currentLogo || null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // currentLogoが変更されたときにpreviewUrlを更新
   useEffect(() => {
-    setPreviewUrl(currentLogo || null)
+    if (currentLogo) {
+      setPreviewUrl(currentLogo)
+    }
   }, [currentLogo])
 
   const handleFileSelect = (file: File) => {
@@ -93,9 +95,8 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLog
           </div>
         ) : (
           <div className="logoUploadPlaceholder">
-            <div className="uploadIcon">📁</div>
-            <p>クリックまたはドラッグ&ドロップでロゴをアップロード</p>
-            <p className="uploadHint">PNG, JPG, SVG対応（500KB以下）</p>
+            <p>Click or Drag & Drop to upload logo</p>
+            <p className="uploadHint">PNG, JPG, SVG supported (max 500KB)</p>
           </div>
         )}
       </div>
