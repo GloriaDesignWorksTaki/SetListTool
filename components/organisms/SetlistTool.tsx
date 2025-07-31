@@ -457,6 +457,7 @@ const SetlistTool = () => {
 
   const openPDFPreview = async () => {
     try {
+      console.log('PDF生成開始...');
       const blob = await pdf(
         <MyDocument 
           name={bandName} 
@@ -468,34 +469,36 @@ const SetlistTool = () => {
         />
       ).toBlob();
       
-      // スマホ対応のPDFプレビュー
+      console.log('Blob生成完了:', blob.size, 'bytes');
+      
+      // Blob URLを生成
       const url = URL.createObjectURL(blob);
+      console.log('Blob URL生成完了:', url);
       
       // デバイス判定
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      console.log('デバイス判定:', isMobile ? 'モバイル' : 'デスクトップ');
       
       if (isMobile) {
-        // スマホの場合はダウンロードを促す
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `setlist_${date || 'today'}.pdf`;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // トースト通知
-        setToastMessage('PDFをダウンロードしました。ファイルアプリで確認してください。');
-        setIsToastVisible(true);
+        // スマホの場合は新しいウィンドウで開く
+        console.log('モバイル用: 新しいウィンドウでPDFを開きます');
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+          // ポップアップがブロックされた場合
+          console.log('ポップアップがブロックされました。同じウィンドウで開きます');
+          window.location.href = url;
+        }
       } else {
         // デスクトップの場合は新しいタブで開く
+        console.log('デスクトップ用: 新しいタブでPDFを開きます');
         window.open(url, '_blank');
       }
       
       // メモリリーク防止のため、少し遅延してからURLを解放
       setTimeout(() => {
         URL.revokeObjectURL(url);
-      }, 1000);
+        console.log('Blob URLを解放しました');
+      }, 5000);
       
     } catch (error) {
       console.error('PDF生成エラー:', error);
@@ -584,7 +587,7 @@ const SetlistTool = () => {
           <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter Venue" required />
         </div>
         <div className="block">
-          <Submit onClick={openPDFPreview} text="Generate PDF" />
+          <Submit onClick={openPDFPreview} text="Preview PDF" />
         </div>
       </div>
     </div>
