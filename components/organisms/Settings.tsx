@@ -10,6 +10,7 @@ import { LogoUpload } from '@/components/atoms/LogoUpload'
 export default function Settings() {
   const [bandName, setBandName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
+  const [logoIsLight, setLogoIsLight] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { setBandName: setGlobalBandName } = useBand()
@@ -42,10 +43,12 @@ export default function Settings() {
         if (band) {
           setBandName(band.name || '')
           setLogoUrl(band.logo_url || '')
+          setLogoIsLight(false) // 一時的にfalseに設定
         } else {
           // バンドデータが存在しない場合は空文字を設定
           setBandName('')
           setLogoUrl('')
+          setLogoIsLight(false)
         }
       } catch (error) {
         console.error('エラーが発生しました:', error)
