@@ -5,9 +5,12 @@ import { supabase } from '@/pages/api/supabaseClient'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
+import { LogoUpload } from '@/components/atoms/LogoUpload'
 
 export default function Settings() {
   const [bandName, setBandName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [logoIsLight, setLogoIsLight] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { setBandName: setGlobalBandName } = useBand()
@@ -23,7 +26,7 @@ export default function Settings() {
 
         const { data: band, error } = await supabase
           .from('bands')
-          .select('name')
+          .select('name, logo_url')
           .eq('user_id', user.id)
           .maybeSingle()
         
@@ -37,20 +40,28 @@ export default function Settings() {
           return
         }
 
-        if (band) {
+                if (band) {
           setBandName(band.name || '')
+          setLogoUrl(band.logo_url || '')
+          setLogoIsLight(false) // 一時的にfalseに設定
         } else {
           // バンドデータが存在しない場合は空文字を設定
           setBandName('')
+          setLogoUrl('')
+          setLogoIsLight(false)
         }
       } catch (error) {
         console.error('エラーが発生しました:', error)
+        // エラー時も初期化
+        setBandName('')
+        setLogoUrl('')
+        setLogoIsLight(false)
       }
     }
     fetchBand()
   }, [router])
 
-  const handleUpdateBandName = async () => {
+  const handleUpdateBandNameWithLogo = async (logoUrlToSave: string) => {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
@@ -74,16 +85,20 @@ export default function Settings() {
       }
 
       if (existingBand) {
+        console.log('バンド更新:', { name: bandName, logo_url: logoUrlToSave })
         const { error: updateError } = await supabase
           .from('bands')
-          .update({ name: bandName })
+          .update({ 
+            name: bandName,
+            logo_url: logoUrlToSave
+          })
           .eq('id', existingBand.id)
 
         if (updateError) {
           console.error('Failed to update band name:', updateError)
           alert('Failed to update band name')
         } else {
-          alert('Band name updated')
+          alert('Settings updated')
           setGlobalBandName(bandName || 'No Band Name')
         }
       } else {
@@ -92,7 +107,8 @@ export default function Settings() {
           .insert([
             {
               user_id: user.id,
-              name: bandName
+              name: bandName,
+              logo_url: logoUrlToSave
             }
           ])
 
@@ -109,6 +125,10 @@ export default function Settings() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleUpdateBandName = async () => {
+    await handleUpdateBandNameWithLogo(logoUrl)
   }
 
   return (
@@ -130,6 +150,20 @@ export default function Settings() {
               onChange={(e) => setBandName(e.target.value)}
               className="input"
               placeholder="Enter Band Name"
+            />
+          </div>
+          <div className="block">
+            <LogoUpload 
+              onLogoUpload={(url) => {
+                console.log('ロゴアップロード/削除:', url)
+                setLogoUrl(url)
+                // ロゴがアップロードまたは削除されたら即座に保存
+                setTimeout(() => {
+                  // 最新のURLを直接渡して保存
+                  handleUpdateBandNameWithLogo(url)
+                }, 100)
+              }}
+              currentLogo={logoUrl}
             />
           </div>
           <div className="block">
