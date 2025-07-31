@@ -85,6 +85,11 @@ html.dragging {
   font-weight: bold;
 }
 
+/* text */
+.desc {
+  margin-bottom: 1rem;
+}
+
 /* section */
 section {
   padding: 3rem;

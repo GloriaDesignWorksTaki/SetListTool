@@ -61,7 +61,7 @@ export default function Settings() {
     fetchBand()
   }, [router])
 
-  const handleUpdateBandName = async () => {
+  const handleUpdateBandNameWithLogo = async (logoUrlToSave: string) => {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
@@ -85,12 +85,12 @@ export default function Settings() {
       }
 
       if (existingBand) {
-        console.log('バンド更新:', { name: bandName, logo_url: logoUrl })
+        console.log('バンド更新:', { name: bandName, logo_url: logoUrlToSave })
         const { error: updateError } = await supabase
           .from('bands')
           .update({ 
             name: bandName,
-            logo_url: logoUrl
+            logo_url: logoUrlToSave
           })
           .eq('id', existingBand.id)
 
@@ -108,7 +108,7 @@ export default function Settings() {
             {
               user_id: user.id,
               name: bandName,
-              logo_url: logoUrl
+              logo_url: logoUrlToSave
             }
           ])
 
@@ -125,6 +125,10 @@ export default function Settings() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleUpdateBandName = async () => {
+    await handleUpdateBandNameWithLogo(logoUrl)
   }
 
   return (
@@ -151,15 +155,13 @@ export default function Settings() {
           <div className="block">
             <LogoUpload 
               onLogoUpload={(url) => {
-                console.log('ロゴアップロード:', url)
+                console.log('ロゴアップロード/削除:', url)
                 setLogoUrl(url)
-                // ロゴがアップロードされたら即座に保存
-                if (url) {
-                  // 状態更新を待ってから保存
-                  setTimeout(() => {
-                    handleUpdateBandName()
-                  }, 100)
-                }
+                // ロゴがアップロードまたは削除されたら即座に保存
+                setTimeout(() => {
+                  // 最新のURLを直接渡して保存
+                  handleUpdateBandNameWithLogo(url)
+                }, 100)
               }}
               currentLogo={logoUrl}
             />

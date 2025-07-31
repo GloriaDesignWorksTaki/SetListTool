@@ -71,17 +71,18 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLog
   }
 
   const handleRemoveLogo = () => {
+    console.log('ロゴ削除実行')
     setPreviewUrl(null)
     onLogoUpload('')
-    // ロゴが削除されたら即座に保存
-    setTimeout(() => {
-      onLogoUpload('')
-    }, 0)
   }
 
   return (
     <div className="logoUpload">
       <h3>Band Logo</h3>
+      <div className="desc">
+        <p>Setlist background is default black.</p>
+        <p>We recommend uploading a white logo.</p>
+      </div>
       <div
         className={`logoUploadArea ${isDragging ? 'dragging' : ''} ${previewUrl ? 'hasLogo' : ''}`}
         onDragOver={handleDragOver}
