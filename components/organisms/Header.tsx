@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from 'next/router'
 import { signOut } from 'next-auth/react'
 import { useBand } from '@/contexts/BandContext'
+import Image from 'next/image'
 
 const Header: React.FC = () => {
   const router = useRouter()
@@ -16,6 +17,7 @@ const Header: React.FC = () => {
 
   return (
     <header>
+      <Image src="/img/logo-white.webp" alt="logo" width={30} height={30} />
       <h1>Setlist Maker</h1>
       <div className="headerContent">
         <nav>
