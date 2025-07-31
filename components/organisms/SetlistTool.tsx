@@ -10,6 +10,7 @@ import H2Title from "@/components/atoms/H2Title";
 import Date from "@/components/atoms/form/Date";
 import Input from "@/components/atoms/form/Input";
 import Submit from "@/components/atoms/form/Submit";
+import { Toast } from "@/components/atoms/Toast";
 import { supabase } from "@/pages/api/supabaseClient";
 import { useBand } from "@/contexts/BandContext";
 
@@ -58,6 +59,8 @@ const SetlistTool = () => {
   const [venue, setVenue] = useState("");
   const [eventTitle, setEventTitle] = useState("");
   const [mcInput, setMcInput] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [isToastVisible, setIsToastVisible] = useState(false);
   const { data: session } = useSession();
   const { bandName } = useBand();
 
@@ -312,6 +315,10 @@ const SetlistTool = () => {
       saveSetlistToSession(newSetlist);
       return newSetlist;
     });
+    
+    // トースト通知を表示
+    setToastMessage(`${songToAdd}をセットリストに追加しました`);
+    setIsToastVisible(true);
   };
 
   const handleAddMC = () => {
@@ -332,6 +339,7 @@ const SetlistTool = () => {
 
   const handleRemoveFromSetlist = (id: string) => {
     setSetlist((prev) => {
+      const itemToRemove = prev.find(item => item.id === id);
       const newSetlist = prev.filter(item => item.id !== id);
       // 曲の順番を再計算
       let songCount = 0;
@@ -348,6 +356,16 @@ const SetlistTool = () => {
       saveSetlistToSession(updatedSetlist);
       return updatedSetlist;
     });
+    
+    // 削除されたアイテムの内容を取得してトースト通知を表示
+    const removedItem = setlist.find(item => item.id === id);
+    if (removedItem) {
+      const message = removedItem.type === 'song' 
+        ? `${removedItem.content}をセットリストから削除しました`
+        : `MC: ${removedItem.content}をセットリストから削除しました`;
+      setToastMessage(message);
+      setIsToastVisible(true);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -387,6 +405,11 @@ const SetlistTool = () => {
 
   return (
     <div className="setlistContent">
+      <Toast 
+        message={toastMessage}
+        isVisible={isToastVisible}
+        onClose={() => setIsToastVisible(false)}
+      />
       <div className="container">
         <div className="block">
           <H2Title title="Song Title" />
