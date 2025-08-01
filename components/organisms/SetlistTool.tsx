@@ -10,8 +10,7 @@ import H2Title from "@/components/atoms/H2Title";
 import Date from "@/components/atoms/form/Date";
 import Input from "@/components/atoms/form/Input";
 import Submit from "@/components/atoms/form/Submit";
-import { Toast } from "@/components/atoms/Toast";
-import { LogoUpload } from "@/components/atoms/LogoUpload";
+import { Toast } from "@/components/atoms/Toast"; 
 import { supabase } from "@/pages/api/supabaseClient";
 import { useBand } from "@/contexts/BandContext";
 import { FiPlus } from "react-icons/fi";
@@ -145,7 +144,7 @@ const SetlistTool = () => {
         return
       }
 
-      const { data: songs, error } = await supabase
+      const { data: dbSongs, error } = await supabase
         .from("songs")
         .select('id, title, band_id')
         .eq('band_id', bandId)
@@ -156,11 +155,25 @@ const SetlistTool = () => {
         return
       }
 
-      console.log('データベースから取得した曲:', songs)
+      console.log('データベースから取得した曲:', dbSongs)
       
-      if (songs && songs.length > 0) {
-        setSongs(songs);
-        updateLocalStorage(songs);
+      if (dbSongs && dbSongs.length > 0) {
+        // 現在のローカルデータとデータベースデータをマージ
+        setSongs((currentSongs) => {
+          // データベースの曲をマップ
+          const dbSongMap = new Map(dbSongs.map(song => [song.title, song]));
+          
+          // ローカルの曲で、データベースに存在しないものを保持
+          const localOnlySongs = currentSongs.filter(song => !dbSongMap.has(song.title));
+          
+          // データベースの曲とローカルの曲を結合
+          const mergedSongs = [...dbSongs, ...localOnlySongs];
+          
+          // ローカルストレージを更新
+          updateLocalStorage(mergedSongs);
+          
+          return mergedSongs;
+        });
       }
     } catch (error) {
       console.error("曲の読み込みエラー:", error);
@@ -190,9 +203,18 @@ const SetlistTool = () => {
     
     // 次にデータベースから読み込み（上書き）
     loadSongsFromDB();
-    restoreSetlistFromSession(); // セッションからSetlistを復元
-    loadLogo(); // ロゴを読み込み
-  }, [session]); // sessionが変更されたときに再実行
+    restoreSetlistFromSession(); 
+    loadLogo(); 
+  }, []); 
+
+  // セッションが変更されたときにデータを再読み込み
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadSongsFromDB();
+      restoreSetlistFromSession();
+      loadLogo();
+    }
+  }, [session?.user?.id]);
 
   const updateLocalStorage = (updatedSongs: Song[]) => {
     localStorage.setItem("songs", JSON.stringify(updatedSongs));
@@ -305,10 +327,6 @@ const SetlistTool = () => {
       } else {
         console.log("曲をデータベースに保存しました:", title);
         console.log("挿入されたデータ:", data)
-        // 新しく追加された曲をsongs状態に追加
-        if (data && data[0]) {
-          setSongs(prev => [...prev, data[0]]);
-        }
       }
     } catch (error) {
       console.error("曲の保存エラー:", error);
