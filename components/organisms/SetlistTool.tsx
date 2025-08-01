@@ -158,22 +158,9 @@ const SetlistTool = () => {
       console.log('データベースから取得した曲:', dbSongs)
       
       if (dbSongs && dbSongs.length > 0) {
-        // 現在のローカルデータとデータベースデータをマージ
-        setSongs((currentSongs) => {
-          // データベースの曲をマップ
-          const dbSongMap = new Map(dbSongs.map(song => [song.title, song]));
-          
-          // ローカルの曲で、データベースに存在しないものを保持
-          const localOnlySongs = currentSongs.filter(song => !dbSongMap.has(song.title));
-          
-          // データベースの曲とローカルの曲を結合
-          const mergedSongs = [...dbSongs, ...localOnlySongs];
-          
-          // ローカルストレージを更新
-          updateLocalStorage(mergedSongs);
-          
-          return mergedSongs;
-        });
+        setSongs(dbSongs);
+      } else {
+        setSongs([]);
       }
     } catch (error) {
       console.error("曲の読み込みエラー:", error);
@@ -181,27 +168,7 @@ const SetlistTool = () => {
   };
 
   useEffect(() => {
-    // まずローカルストレージから読み込み
-    const savedSongs = localStorage.getItem("songs");
-    if (savedSongs) {
-      try {
-        const parsedSongs = JSON.parse(savedSongs);
-        // 古い形式（文字列配列）の場合は新しい形式に変換
-        if (Array.isArray(parsedSongs) && typeof parsedSongs[0] === 'string') {
-          const convertedSongs = parsedSongs.map((title, index) => ({
-            id: `local_${index}`,
-            title
-          }));
-          setSongs(convertedSongs);
-        } else {
-          setSongs(parsedSongs);
-        }
-      } catch (error) {
-        console.error('ローカルストレージからの読み込みエラー:', error);
-      }
-    }
-    
-    // 次にデータベースから読み込み（上書き）
+    // データベースから読み込み
     loadSongsFromDB();
     restoreSetlistFromSession(); 
     loadLogo(); 
@@ -216,9 +183,7 @@ const SetlistTool = () => {
     }
   }, [session?.user?.id]);
 
-  const updateLocalStorage = (updatedSongs: Song[]) => {
-    localStorage.setItem("songs", JSON.stringify(updatedSongs));
-  };
+
 
   // ロゴを取得
   const loadLogo = async () => {
@@ -339,12 +304,7 @@ const SetlistTool = () => {
       title: song
     };
     
-    setSongs((prev) => {
-      const updatedSongs = [...prev, newSong];
-      updateLocalStorage(updatedSongs);
-      return updatedSongs;
-    });
-
+    setSongs((prev) => [...prev, newSong]);
     addSongToDB(song); // ← Supabaseに保存
   };
 
@@ -375,12 +335,7 @@ const SetlistTool = () => {
   };
 
   const handleDeleteSong = (songToDelete: string) => {
-    setSongs((prev) => {
-      const updatedSongs = prev.filter((song) => song.title !== songToDelete);
-      updateLocalStorage(updatedSongs);
-      return updatedSongs;
-    });
-
+    setSongs((prev) => prev.filter((song) => song.title !== songToDelete));
     deleteSongFromDB(songToDelete); // ← Supabaseから削除
   };
 
