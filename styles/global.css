@@ -29,13 +29,13 @@ html, body {
   touch-action: manipulation;
 }
 
-/* スマホでのズーム防止 */
+/* Mobile Zoom Prevent */
 html {
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
 }
 
-/* 文字選択防止（ドラッグ&ドロップ用） */
+/* No Select */
 .no-select {
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -45,7 +45,7 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ドラッグ&ドロップ専用のタッチ制御 */
+/* Dragging Touch Control */
 .draggable {
   touch-action: none;
   -webkit-user-select: none;
@@ -54,12 +54,19 @@ html {
   user-select: none;
 }
 
-/* ドラッグ中のスタイル */
+/* Dragging Style */
 .dragging {
   touch-action: none !important;
   pointer-events: none;
   z-index: 1000;
   position: relative;
+}
+
+/* songCard & mcCard Dragging */
+.songCard.dragging,
+.mcCard.dragging {
+  transform: rotate(4deg);
+  transition: transform 0.2s ease;
 }
 
 /* ドラッグ中の子要素も制御 */

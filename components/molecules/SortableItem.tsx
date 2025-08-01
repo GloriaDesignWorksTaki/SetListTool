@@ -56,6 +56,7 @@ export const SortableItem = ({
               title: content,
             }}
             onRemove={onRemoveFromSetlist}
+            isDragging={isDragging}
           />
         ) : (
           <SongCard
