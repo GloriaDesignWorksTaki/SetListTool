@@ -3,6 +3,8 @@
 import React, { memo } from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { FiTrash2, FiPlus } from "react-icons/fi"
+import { Button } from "@/components/atoms/Button"
 
 type SongCardProps = {
   song: string;
@@ -30,8 +32,22 @@ const SongCard: React.FC<SongCardProps> = memo(({ song, onDelete, onAddToSetlist
       <span className="songCardTitle">{song}</span>
       {isInSetlist ? null : (
         <>
-          {onDelete && <button onClick={() => onDelete(song)} className="songCardDelete">Delete</button>}
-          {onAddToSetlist && <button onClick={() => onAddToSetlist(song)} className="AddToSetlistButton">{buttonLabel}</button>}
+          {onDelete && (
+            <Button 
+              onClick={() => onDelete(song)} 
+              className="songCardDelete secondary"
+              text="Delete"
+              icon={<FiTrash2 />}
+            />
+          )}
+          {onAddToSetlist && (
+            <Button 
+              onClick={() => onAddToSetlist(song)} 
+              className="AddToSetlistButton"
+              text={buttonLabel}
+              icon={<FiPlus />}
+            />
+          )}
         </>
       )}
     </div>

@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { supabase } from '@/pages/api/supabaseClient'
 import { useRouter } from 'next/router'
 import { signIn, signOut, useSession } from 'next-auth/react'
+import Image from 'next/image'
+import { AiOutlineLogin } from 'react-icons/ai'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -90,6 +92,7 @@ export default function Auth() {
   return (
     <div className="auth">
       <div className="authForm">
+        <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
         <h2>{isLogin ? 'ログイン' : 'サインアップ'}</h2>
         
         {message && (
@@ -113,6 +116,7 @@ export default function Auth() {
           className="input"
         />
         <button onClick={handleAuth} disabled={loading} className="submitButton">
+          <AiOutlineLogin />
           {loading ? '処理中...' : isLogin ? 'ログイン' : 'サインアップ'}
         </button>
         

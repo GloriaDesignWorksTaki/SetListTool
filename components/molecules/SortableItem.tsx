@@ -2,6 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import SongCard from "@/components/atoms/SongCard";
 import { MCCard } from "@/components/atoms/MCCard";
+import { Button } from "@/components/atoms/Button";
+import { IoMdRemoveCircle } from "react-icons/io";
 
 type SortableItemProps = {
   id: string;
@@ -54,6 +56,7 @@ export const SortableItem = ({
               title: content,
             }}
             onRemove={onRemoveFromSetlist}
+            isDragging={isDragging}
           />
         ) : (
           <SongCard
@@ -67,7 +70,7 @@ export const SortableItem = ({
           />
         )}
       </div>
-      <button className="RemoveFromSetlistButton" onClick={handleRemove}>Remove</button>
+      <Button className="RemoveFromSetlistButton secondary" onClick={handleRemove} text="Remove" icon={<IoMdRemoveCircle />} />
     </div>
   );
 }; 
