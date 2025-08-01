@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
-import { pdf, Document, Page, Text, View, Image } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, Image, Font } from '@react-pdf/renderer';
 import { useSession } from "next-auth/react";
 import { SongInput } from "@/components/molecules/SongInput";
 import { SortableItem } from "@/components/molecules/SortableItem";
@@ -15,6 +15,21 @@ import { supabase } from "@/pages/api/supabaseClient";
 import { useBand } from "@/contexts/BandContext";
 import { FiPlus } from "react-icons/fi";
 import { FaFilePdf } from "react-icons/fa";
+
+// 日本語フォントを登録
+Font.register({
+  family: 'Zen Kaku Gothic New',
+  fonts: [
+    {
+      src: '/font/ZenKakuGothicNew-Regular.ttf',
+      fontWeight: 'normal'
+    },
+    {
+      src: '/font/ZenKakuGothicNew-Bold.ttf',
+      fontWeight: 'bold'
+    }
+  ]
+});
 
 type SetlistItem = {
   id: string;
@@ -53,16 +68,18 @@ const MyDocument = ({ name, date, venue, setlist, eventTitle, logoUrl }: { name:
             <Text style={{ 
               fontSize: 40, 
               textAlign: 'center', 
-              color: 'white'
+              color: 'white',
+              fontFamily: 'Zen Kaku Gothic New',
+              fontWeight: 'bold'
             }}>
               {name}
             </Text>
           )}
         </View>
         
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{date}</Text>
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white' }}>{eventTitle}</Text>
-        <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 20, color: 'white' }}>{venue}</Text>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 10, color: 'white', fontFamily: 'Zen Kaku Gothic New' }}>{date}</Text>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 0, color: 'white', fontFamily: 'Zen Kaku Gothic New' }}>{eventTitle}</Text>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 15, color: 'white', fontFamily: 'Zen Kaku Gothic New', fontWeight: 'bold' }}>{venue}</Text>
         {setlist.map((item, index) => (
           <Text 
             key={item.id} 
@@ -70,10 +87,12 @@ const MyDocument = ({ name, date, venue, setlist, eventTitle, logoUrl }: { name:
               fontSize: 30, 
               marginBottom: 15, 
               color: 'white',
-              padding: item.type === 'mc' ? 5 : 0
+              padding: item.type === 'mc' ? 5 : 0,
+              fontFamily: 'Zen Kaku Gothic New',
+              fontWeight: item.type === 'mc' ? 'normal' : 'bold'
             }}
           >
-            {item.type === 'song' ? `${item.order}. ${item.content}` : `---MC: ${item.content}---`}
+            {item.type === 'song' ? `${item.order}. ${item.content}` : `-- MC: ${item.content} --`}
           </Text>
         ))}
       </div>
