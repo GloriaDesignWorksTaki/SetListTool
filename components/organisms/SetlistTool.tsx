@@ -14,6 +14,8 @@ import { Toast } from "@/components/atoms/Toast";
 import { LogoUpload } from "@/components/atoms/LogoUpload";
 import { supabase } from "@/pages/api/supabaseClient";
 import { useBand } from "@/contexts/BandContext";
+import { FiPlus } from "react-icons/fi";
+import { FaFilePdf } from "react-icons/fa";
 
 type SetlistItem = {
   id: string;
@@ -571,7 +573,7 @@ const SetlistTool = () => {
               onChange={(e) => setMcInput(e.target.value)} 
               placeholder="Enter MC Content" 
             />
-            <Submit onClick={handleAddMC} text="Add MC" />
+            <Submit onClick={handleAddMC} text="Add MC" icon={<FiPlus />} />
           </div>
         </div>
         <div className="block">
@@ -587,7 +589,7 @@ const SetlistTool = () => {
           <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Enter Venue" required />
         </div>
         <div className="block">
-          <Submit onClick={openPDFPreview} text="Preview PDF" />
+          <Submit onClick={openPDFPreview} text="Preview PDF" icon={<FaFilePdf />} />
         </div>
       </div>
     </div>

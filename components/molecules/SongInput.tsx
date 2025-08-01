@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Input } from '@/components/atoms/Input'
 import { Button } from '@/components/atoms/Button'
+import { FiPlus } from 'react-icons/fi'
 
 interface SongInputProps {
   onAddSong: (song: string) => void
@@ -25,7 +26,7 @@ export const SongInput: React.FC<SongInputProps> = ({ onAddSong }) => {
         placeholder="Enter Song Title"
         required={true}
       />
-      <Button className='submitButton' type="submit" text="Add Song" />
+      <Button className='submitButton' type="submit" text="Add Song" icon={<FiPlus />} />
     </form>
   )
 } 

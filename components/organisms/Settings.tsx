@@ -6,6 +6,8 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
 import { LogoUpload } from '@/components/atoms/LogoUpload'
+import { Button } from '@/components/atoms/Button'
+import { FiSave } from 'react-icons/fi'
 
 export default function Settings() {
   const [bandName, setBandName] = useState('')
@@ -167,13 +169,7 @@ export default function Settings() {
             />
           </div>
           <div className="block">
-            <button
-              onClick={handleUpdateBandName}
-              disabled={loading}
-              className="submitButton"
-            >
-              {loading ? 'Updating...' : 'Update'}
-            </button>
+            <Button className="submitButton" onClick={handleUpdateBandName} text="Update" icon={<FiSave />} />
           </div>
         </div>
       </section>

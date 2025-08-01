@@ -133,6 +133,14 @@ section .wrapper {
   background-color: #000000;
 }
 
+.button-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: .25rem;
+  font-size: 1.125rem;
+}
+
 /* Error Message */
 .errorMessage {
   padding: .5rem;
@@ -159,6 +167,10 @@ section .wrapper {
   appearance: none;
 }
 .submitButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
   background-color: var(--primary-color);
   color: var(--white-color);
   padding: .5rem 1rem;
@@ -169,6 +181,7 @@ section .wrapper {
   margin-top: 1rem;
   transition: background-color 0.3s ease;
   -webkit-tap-highlight-color: transparent;
+  font-size: 1rem;
 }
 .submitButton:hover {
   background-color: var(--primary-dark);
@@ -199,7 +212,7 @@ section .wrapper {
 .songCard .songCardTitle,
 .mcCard .mcCardTitle {
   flex-grow: 1;
-  margin-left: .25rem;
+  margin: 0 .25rem;
 }
 .songCard + .songCard {
   margin-top: .5rem;
@@ -207,6 +220,9 @@ section .wrapper {
 .songCardDelete,
 .RemoveFromSetlistButton,
 .AddToSetlistButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   background-color: var(--primary-color);
   color: var(--white-color);
@@ -242,6 +258,14 @@ section .wrapper {
   width: 100%;
 }
 
+/* Secondary Button */
+.secondary {
+  background-color: var(--secondary-color);
+}
+.secondary:hover {
+  background-color: var(--secondary-dark);
+}
+
 /* SortableItem */
 .sortableItem {
   display: flex;
@@ -273,6 +297,7 @@ section .wrapper {
   flex-grow: 1;
 }
 .sortableItem .RemoveFromSetlistButton {
+  margin-top: 0;
   flex-shrink: 0;
 }
 
@@ -288,6 +313,10 @@ section .wrapper {
   max-width: 400px;
   background-color: var(--primary-pale);
   border-radius: 5px;
+}
+.auth .authForm img {
+  display: block;
+  margin: 0 auto 2rem;
 }
 .auth .signUpButton {
   margin-top: 1rem;
@@ -474,6 +503,44 @@ footer .copy {
   .RemoveFromSetlistButton,
   .AddToSetlistButton {
     padding: 0.5rem .75rem;
+  }
+
+  /* SongCard buttons - show only icons on mobile */
+  .songCardDelete .button-text,
+  .AddToSetlistButton .button-text {
+    display: none;
+  }
+  .songCardDelete,
+  .AddToSetlistButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    padding: 0.5rem;
+    margin-top: 0;
+  }
+  .songCardDelete .button-icon,
+  .AddToSetlistButton .button-icon {
+    font-size: 1rem;
+    margin-right: 0;
+  }
+
+  /* RemoveFromSetlistButton - show only icons on mobile */
+  .RemoveFromSetlistButton .button-text {
+    display: none;
+  }
+
+  .RemoveFromSetlistButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    padding: 0.5rem;
+  }
+
+  .RemoveFromSetlistButton .button-icon {
+    font-size: 1rem;
+    margin-right: 0;
   }
 }
 

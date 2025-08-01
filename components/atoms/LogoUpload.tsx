@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import { Button } from '@/components/atoms/Button'
+import { FaTrashAlt } from 'react-icons/fa'
 
 interface LogoUploadProps {
   onLogoUpload: (logoUrl: string) => void
@@ -102,11 +104,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLog
         )}
       </div>
       {previewUrl && (
-        <button 
-          type="button" 
-          className="removeLogoButton submitButton"
-          onClick={handleRemoveLogo}
-        >Remove Logo</button>
+        <Button className="removeLogoButton submitButton secondary" onClick={handleRemoveLogo} text="Remove Logo" icon={<FaTrashAlt />} />
       )}
       <input
         ref={fileInputRef}

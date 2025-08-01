@@ -8,6 +8,7 @@ interface ButtonProps {
   disabled?: boolean
   className?: string
   text: string
+  icon?: React.ReactNode
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -15,7 +16,8 @@ export const Button: React.FC<ButtonProps> = ({
   onClick,
   disabled = false,
   className = '',
-  text
+  text,
+  icon
 }) => {
   return (
     <button
@@ -24,7 +26,8 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       className={`button ${className}`}
     >
-      {text}
+      {icon && <span className="button-icon">{icon}</span>}
+      <span className="button-text">{text}</span>
     </button>
   )
 }
