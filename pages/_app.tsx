@@ -8,6 +8,12 @@ import { useRouter } from "next/router";
 import { BandProvider } from "@/contexts/BandContext";
 import { useEffect } from "react";
 import { setSupabaseAuth } from "./api/supabaseClient";
+import { registerFonts } from "@/utils/fonts";
+
+// PDF生成用のフォントを登録（クライアントサイドでのみ実行）
+if (typeof window !== 'undefined') {
+  registerFonts();
+}
 
 // Supabase認証を設定するコンポーネント
 const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {

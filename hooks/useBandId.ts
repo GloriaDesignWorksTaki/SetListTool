@@ -18,7 +18,6 @@ interface UseBandIdReturn {
 
 /**
  * 現在のユーザーのバンドIDを取得するカスタムフック
- * 
  * @param options - フックのオプション
  * @returns バンドID、ローディング状態、エラー、再取得関数
  */
@@ -109,4 +108,5 @@ export const useBandId = (options: UseBandIdOptions = {}): UseBandIdReturn => {
     refetch: fetchBandId,
   }
 }
+
 
