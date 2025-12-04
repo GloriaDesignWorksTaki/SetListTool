@@ -7,6 +7,8 @@ import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
 import { LogoUpload } from '@/components/atoms/LogoUpload'
 import { Button } from '@/components/atoms/Button'
+import { Toast } from '@/components/atoms/Toast'
+import { useToast } from '@/hooks/useToast'
 import { FiSave } from 'react-icons/fi'
 
 export default function Settings() {
@@ -16,6 +18,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { setBandName: setGlobalBandName } = useBand()
+  const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast()
 
   useEffect(() => {
     const fetchBand = async () => {
@@ -31,7 +34,7 @@ export default function Settings() {
           .select('name, logo_url')
           .eq('user_id', user.id)
           .maybeSingle()
-        
+
         if (error) {
           console.error('バンド情報の取得に失敗しました:', error)
           // テーブルが存在しない場合は無視
@@ -67,9 +70,9 @@ export default function Settings() {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (!user) {
-        alert('Login is required')
+        showToast('ログインが必要です')
         router.push('/login')
         return
       }
@@ -81,8 +84,8 @@ export default function Settings() {
         .single()
 
       if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Failed to fetch band information:', fetchError)
-        alert('Failed to fetch band information')
+        console.error('バンド情報の取得に失敗しました:', fetchError)
+        showToast('バンド情報の取得に失敗しました')
         return
       }
 
@@ -90,17 +93,17 @@ export default function Settings() {
         console.log('バンド更新:', { name: bandName, logo_url: logoUrlToSave })
         const { error: updateError } = await supabase
           .from('bands')
-          .update({ 
+          .update({
             name: bandName,
             logo_url: logoUrlToSave
           })
           .eq('id', existingBand.id)
 
         if (updateError) {
-          console.error('Failed to update band name:', updateError)
-          alert('Failed to update band name')
+          console.error('バンド名の更新に失敗しました:', updateError)
+          showToast('バンド名の更新に失敗しました')
         } else {
-          alert('Settings updated')
+          showToast('設定を更新しました')
           setGlobalBandName(bandName || 'No Band Name')
         }
       } else {
@@ -115,15 +118,15 @@ export default function Settings() {
           ])
 
         if (insertError) {
-          console.error('Failed to save band name:', insertError)
-          alert('Failed to save band name')
+          console.error('バンド名の保存に失敗しました:', insertError)
+          showToast('バンド名の保存に失敗しました')
         } else {
-          alert('Band name saved')
+          showToast('バンド名を保存しました')
         }
       }
     } catch (error) {
-      console.error('Error:', error)
-      alert('Error')
+      console.error('エラーが発生しました:', error)
+      showToast('エラーが発生しました')
     } finally {
       setLoading(false)
     }
@@ -141,6 +144,11 @@ export default function Settings() {
         <meta name="description" content="Setlist Maker is a tool to create setlists and export them as PDFs." />
         <link rel="icon" href="favicon.ico" />
       </Head>
+      <Toast
+        message={toastMessage}
+        isVisible={isToastVisible}
+        onClose={hideToast}
+      />
       <section>
         <div className="wrapper">
           <div className="block">
@@ -155,7 +163,7 @@ export default function Settings() {
             />
           </div>
           <div className="block">
-            <LogoUpload 
+            <LogoUpload
               onLogoUpload={(url) => {
                 console.log('ロゴアップロード/削除:', url)
                 setLogoUrl(url)
@@ -164,6 +172,9 @@ export default function Settings() {
                   // 最新のURLを直接渡して保存
                   handleUpdateBandNameWithLogo(url)
                 }, 100)
+              }}
+              onError={(message) => {
+                showToast(message)
               }}
               currentLogo={logoUrl}
             />
@@ -176,4 +187,4 @@ export default function Settings() {
     </main>
     </>
   )
-} 
+}
