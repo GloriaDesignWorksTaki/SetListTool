@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { DndContext, DragEndEvent, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { pdf, Document, Page, Text, View, Image, Font } from '@react-pdf/renderer';
@@ -15,6 +15,8 @@ import { supabase } from "@/pages/api/supabaseClient";
 import { useBand } from "@/contexts/BandContext";
 import { FiPlus } from "react-icons/fi";
 import { FaFilePdf } from "react-icons/fa";
+import { SetlistItem, Song } from "@/types";
+import { useBandId } from "@/hooks/useBandId";
 
 // 日本語フォントを登録
 Font.register({
@@ -30,18 +32,6 @@ Font.register({
     }
   ]
 });
-
-type SetlistItem = {
-  id: string;
-  type: 'song' | 'mc';
-  content: string;
-  order: number;
-};
-
-type Song = {
-  id: string;
-  title: string;
-};
 
 // PDF Document
 const MyDocument = ({ name, date, venue, setlist, eventTitle, logoUrl }: { name: string; date: string; venue: string; setlist: SetlistItem[]; eventTitle: string; logoUrl?: string }) => (
@@ -112,6 +102,7 @@ const SetlistTool = () => {
   const [logoUrl, setLogoUrl] = useState("");
   const { data: session } = useSession();
   const { bandName } = useBand();
+  const { bandId } = useBandId({ createIfNotExists: true });
 
   // ドラッグ&ドロップ用のセンサー設定
   const sensors = useSensors(
@@ -153,11 +144,8 @@ const SetlistTool = () => {
   };
 
   // データベースから曲を読み込み
-  const loadSongsFromDB = async () => {
+  const loadSongsFromDB = useCallback(async () => {
     try {
-      const bandId = await getCurrentBandId()
-      console.log('読み込み対象のバンドID:', bandId)
-      
       if (!bandId) {
         console.log('バンドIDが見つからないため、データベースからの読み込みをスキップ')
         return
@@ -184,30 +172,11 @@ const SetlistTool = () => {
     } catch (error) {
       console.error("曲の読み込みエラー:", error);
     }
-  };
-
-  useEffect(() => {
-    // データベースから読み込み
-    loadSongsFromDB();
-    restoreSetlistFromSession(); 
-    loadLogo(); 
-  }, []); 
-
-  // セッションが変更されたときにデータを再読み込み
-  useEffect(() => {
-    if (session?.user?.id) {
-      loadSongsFromDB();
-      restoreSetlistFromSession();
-      loadLogo();
-    }
-  }, [session?.user?.id]);
-
-
+  }, [bandId]);
 
   // ロゴを取得
-  const loadLogo = async () => {
+  const loadLogo = useCallback(async () => {
     try {
-      const bandId = await getCurrentBandId()
       if (!bandId) return
 
       const { data: band, error } = await supabase
@@ -232,71 +201,25 @@ const SetlistTool = () => {
     } catch (error) {
       console.error('ロゴ取得エラー:', error)
     }
-  }
+  }, [bandId])
 
-  // 現在のユーザーのバンドIDを取得
-  const getCurrentBandId = async () => {
-    try {
-      console.log('getCurrentBandId開始')
-      console.log('セッション情報:', session)
-      
-      if (!session?.user?.id) {
-        console.log('セッションからユーザーIDを取得できません')
-        return null
-      }
+  useEffect(() => {
+    // セッションストレージから復元（bandIdに依存しない）
+    restoreSetlistFromSession(); 
+  }, []); 
 
-      console.log('現在のユーザー:', session.user.id, session.user.email)
-      
-      const { data: band, error } = await supabase
-        .from('bands')
-        .select('id, name')
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-
-      console.log('Supabaseクエリ結果:', { band, error })
-
-      if (error) {
-        console.error('バンドID取得エラー:', error)
-        return null
-      }
-
-      // バンドが存在しない場合は作成
-      if (!band) {
-        console.log('バンドが存在しないため、新しく作成します')
-        const { data: newBand, error: createError } = await supabase
-          .from('bands')
-          .insert([{ 
-            user_id: session.user.id, 
-            name: 'My Band' 
-          }])
-          .select('id, name')
-          .single()
-
-        if (createError) {
-          console.error('バンド作成エラー:', createError)
-          return null
-        }
-
-        console.log('新しく作成したバンド:', newBand)
-        return newBand?.id || null
-      }
-
-      console.log('取得したバンド:', band)
-      return band?.id || null
-    } catch (error) {
-      console.error('バンドID取得エラー:', error)
-      console.log('ネットワークエラーのため、ローカルモードで動作します')
-      return null
+  // バンドIDが取得できたらデータを読み込み
+  useEffect(() => {
+    if (bandId) {
+      loadSongsFromDB();
+      loadLogo();
     }
-  }
+  }, [bandId, loadSongsFromDB, loadLogo]);
+
 
   // Supabaseへの登録処理
   const addSongToDB = async (title: string) => {
     try {
-      console.log('addSongToDB開始:', title)
-      const bandId = await getCurrentBandId()
-      console.log('取得したバンドID:', bandId)
-      
       if (!bandId) {
         console.error('バンドIDが見つかりません。先にバンド名を設定してください。')
         return
@@ -330,8 +253,6 @@ const SetlistTool = () => {
   // データベースから曲を削除
   const deleteSongFromDB = async (title: string) => {
     try {
-      const bandId = await getCurrentBandId()
-      
       if (!bandId) {
         console.error('バンドIDが見つかりません')
         return
