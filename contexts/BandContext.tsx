@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { supabase } from '@/pages/api/supabaseClient'
+import { bandService } from '@/services/bandService'
+import { logger } from '@/utils/logger'
 
 interface BandContextType {
   bandName: string
@@ -42,25 +43,17 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return
         }
 
-        const { data: band, error } = await supabase
-          .from('bands')
-          .select('name')
-          .eq('user_id', session.user.id)
-          .maybeSingle()
+        const bandNameResult = await bandService.getBandName(session.user.id)
 
-        if (error) {
-          console.error('バンド情報の取得に失敗しました:', error)
-          const savedBandName = localStorage.getItem('bandName') || 'No Band Name'
-          setBandName(savedBandName)
-        } else if (band && band.name) {
-          setBandName(band.name)
-          localStorage.setItem('bandName', band.name)
+        if (bandNameResult) {
+          setBandName(bandNameResult)
+          localStorage.setItem('bandName', bandNameResult)
         } else {
           const savedBandName = localStorage.getItem('bandName') || 'No Band Name'
           setBandName(savedBandName)
         }
       } catch (error) {
-        console.error('エラーが発生しました:', error)
+        logger.error('エラーが発生しました:', error)
         const savedBandName = localStorage.getItem('bandName') || 'No Band Name'
         setBandName(savedBandName)
       } finally {
@@ -79,4 +72,4 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <BandContext.Provider value={{ bandName, setBandName: updateBandName, loading }}>{children}</BandContext.Provider>
   )
-} 
+}

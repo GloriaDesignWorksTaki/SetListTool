@@ -94,7 +94,7 @@ export default function Auth() {
       <div className="authForm">
         <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
         <h2>{isLogin ? 'ログイン' : 'サインアップ'}</h2>
-        
+
         {message && (
           <div className="errorMessage">
             {message}
@@ -119,7 +119,7 @@ export default function Auth() {
           <AiOutlineLogin />
           {loading ? '処理中...' : isLogin ? 'ログイン' : 'サインアップ'}
         </button>
-        
+
         <p className="signUpButton" onClick={() => {
           setIsLogin(!isLogin)
           setMessage('')
