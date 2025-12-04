@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react'
 import { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { SetlistItem } from '@/types'
+import { logger } from '@/utils/logger'
 
 interface UseSetlistReturn {
   setlist: SetlistItem[]
@@ -16,7 +17,6 @@ interface UseSetlistReturn {
 /**
  * セットリストの管理を行うカスタムフック
  * セッションストレージへの保存・復元も含む
- * 
  * @returns セットリスト、操作関数
  */
 export const useSetlist = (): UseSetlistReturn => {
@@ -39,7 +39,7 @@ export const useSetlist = (): UseSetlistReturn => {
           const parsedSetlist = JSON.parse(savedSetlist)
           setSetlist(parsedSetlist)
         } catch (error) {
-          console.error('Setlist復元エラー:', error)
+          logger.error('Setlist復元エラー:', error)
         }
       }
     }

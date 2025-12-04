@@ -2,6 +2,8 @@ import React, { useCallback } from 'react'
 import { pdf } from '@react-pdf/renderer'
 import { SetlistItem } from '@/types'
 import { SetlistDocument } from '@/components/pdf/SetlistDocument'
+import { logger } from '@/utils/logger'
+import { registerFonts } from '@/utils/fonts'
 
 interface UsePDFGeneratorReturn {
   generatePDF: (params: {
@@ -16,7 +18,6 @@ interface UsePDFGeneratorReturn {
 
 /**
  * PDF生成を行うカスタムフック
- * 
  * @returns PDF生成関数
  */
 export const usePDFGenerator = (): UsePDFGeneratorReturn => {
@@ -36,8 +37,11 @@ export const usePDFGenerator = (): UsePDFGeneratorReturn => {
     logoUrl?: string
   }) => {
     try {
-      console.log('PDF生成開始...')
-      
+      logger.log('PDF生成開始...')
+
+      // フォントを登録（PDF生成前に必要）
+      registerFonts()
+
       // PDF生成（型エラー回避のため、動的にインポート）
       const { SetlistDocument: PDFDocument } = await import('@/components/pdf/SetlistDocument')
       const blob = await pdf(
@@ -51,40 +55,40 @@ export const usePDFGenerator = (): UsePDFGeneratorReturn => {
         }) as any
       ).toBlob()
 
-      console.log('Blob生成完了:', blob.size, 'bytes')
+      logger.log('Blob生成完了:', blob.size, 'bytes')
 
       // Blob URLを生成
       const url = URL.createObjectURL(blob)
-      console.log('Blob URL生成完了:', url)
+      logger.log('Blob URL生成完了:', url)
 
       // デバイス判定
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       )
-      console.log('デバイス判定:', isMobile ? 'モバイル' : 'デスクトップ')
+      logger.log('デバイス判定:', isMobile ? 'モバイル' : 'デスクトップ')
 
       if (isMobile) {
         // スマホの場合は新しいウィンドウで開く
-        console.log('モバイル用: 新しいウィンドウでPDFを開きます')
+        logger.log('モバイル用: 新しいウィンドウでPDFを開きます')
         const newWindow = window.open(url, '_blank')
         if (!newWindow) {
           // ポップアップがブロックされた場合
-          console.log('ポップアップがブロックされました。同じウィンドウで開きます')
+          logger.log('ポップアップがブロックされました。同じウィンドウで開きます')
           window.location.href = url
         }
       } else {
         // デスクトップの場合は新しいタブで開く
-        console.log('デスクトップ用: 新しいタブでPDFを開きます')
+        logger.log('デスクトップ用: 新しいタブでPDFを開きます')
         window.open(url, '_blank')
       }
 
       // メモリリーク防止のため、少し遅延してからURLを解放
       setTimeout(() => {
         URL.revokeObjectURL(url)
-        console.log('Blob URLを解放しました')
+        logger.log('Blob URLを解放しました')
       }, 5000)
     } catch (error) {
-      console.error('PDF生成エラー:', error)
+      logger.error('PDF生成エラー:', error)
       throw error
     }
   }, [])

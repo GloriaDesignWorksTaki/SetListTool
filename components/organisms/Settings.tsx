@@ -9,6 +9,8 @@ import { LogoUpload } from '@/components/atoms/LogoUpload'
 import { Button } from '@/components/atoms/Button'
 import { Toast } from '@/components/atoms/Toast'
 import { useToast } from '@/hooks/useToast'
+import { bandService } from '@/services/bandService'
+import { logger } from '@/utils/logger'
 import { FiSave } from 'react-icons/fi'
 
 export default function Settings() {
@@ -29,23 +31,9 @@ export default function Settings() {
           return
         }
 
-        const { data: band, error } = await supabase
-          .from('bands')
-          .select('name, logo_url')
-          .eq('user_id', user.id)
-          .maybeSingle()
+        const band = await bandService.getBandByUserId(user.id)
 
-        if (error) {
-          console.error('バンド情報の取得に失敗しました:', error)
-          // テーブルが存在しない場合は無視
-          if (error.code === '42703' || error.code === '42P01') {
-            console.log('bandsテーブルまたはnameカラムが存在しません')
-            return
-          }
-          return
-        }
-
-                if (band) {
+        if (band) {
           setBandName(band.name || '')
           setLogoUrl(band.logo_url || '')
           setLogoIsLight(false) // 一時的にfalseに設定
@@ -56,7 +44,7 @@ export default function Settings() {
           setLogoIsLight(false)
         }
       } catch (error) {
-        console.error('エラーが発生しました:', error)
+        logger.error('エラーが発生しました:', error)
         // エラー時も初期化
         setBandName('')
         setLogoUrl('')
@@ -77,55 +65,32 @@ export default function Settings() {
         return
       }
 
-      const { data: existingBand, error: fetchError } = await supabase
-        .from('bands')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
+      const existingBandId = await bandService.getBandId(user.id)
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('バンド情報の取得に失敗しました:', fetchError)
-        showToast('バンド情報の取得に失敗しました')
-        return
-      }
-
-      if (existingBand) {
-        console.log('バンド更新:', { name: bandName, logo_url: logoUrlToSave })
-        const { error: updateError } = await supabase
-          .from('bands')
-          .update({
+      if (existingBandId) {
+        logger.log('バンド更新:', { name: bandName, logo_url: logoUrlToSave })
+        try {
+          await bandService.update(existingBandId, {
             name: bandName,
-            logo_url: logoUrlToSave
+            logo_url: logoUrlToSave,
           })
-          .eq('id', existingBand.id)
-
-        if (updateError) {
-          console.error('バンド名の更新に失敗しました:', updateError)
-          showToast('バンド名の更新に失敗しました')
-        } else {
           showToast('設定を更新しました')
           setGlobalBandName(bandName || 'No Band Name')
+        } catch (error) {
+          logger.error('バンド名の更新に失敗しました:', error)
+          showToast('バンド名の更新に失敗しました')
         }
       } else {
-        const { error: insertError } = await supabase
-          .from('bands')
-          .insert([
-            {
-              user_id: user.id,
-              name: bandName,
-              logo_url: logoUrlToSave
-            }
-          ])
-
-        if (insertError) {
-          console.error('バンド名の保存に失敗しました:', insertError)
-          showToast('バンド名の保存に失敗しました')
-        } else {
+        try {
+          await bandService.create(user.id, bandName, logoUrlToSave)
           showToast('バンド名を保存しました')
+        } catch (error) {
+          logger.error('バンド名の保存に失敗しました:', error)
+          showToast('バンド名の保存に失敗しました')
         }
       }
     } catch (error) {
-      console.error('エラーが発生しました:', error)
+      logger.error('エラーが発生しました:', error)
       showToast('エラーが発生しました')
     } finally {
       setLoading(false)
@@ -165,16 +130,13 @@ export default function Settings() {
           <div className="block">
             <LogoUpload
               onLogoUpload={(url) => {
-                console.log('ロゴアップロード/削除:', url)
+                logger.log('ロゴアップロード/削除:', url)
                 setLogoUrl(url)
                 // ロゴがアップロードまたは削除されたら即座に保存
                 setTimeout(() => {
                   // 最新のURLを直接渡して保存
                   handleUpdateBandNameWithLogo(url)
                 }, 100)
-              }}
-              onError={(message) => {
-                showToast(message)
               }}
               currentLogo={logoUrl}
             />

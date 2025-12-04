@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/pages/api/supabaseClient'
+import { songService } from '@/services/songService'
 import { Song } from '@/types'
+import { logger } from '@/utils/logger'
 
 interface UseSongsReturn {
   songs: Song[]
   loading: boolean
-  addSong: (title: string) => void
-  deleteSong: (title: string) => void
+  addSong: (title: string) => Promise<void>
+  deleteSong: (title: string) => Promise<void>
   refreshSongs: () => Promise<void>
 }
 
@@ -26,34 +27,18 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
       setLoading(true)
       
       if (!bandId) {
-        console.log('バンドIDが見つからないため、データベースからの読み込みをスキップ')
+        logger.log('バンドIDが見つからないため、データベースからの読み込みをスキップ')
         setSongs([])
         setLoading(false)
         return
       }
 
-      const { data: dbSongs, error } = await supabase
-        .from("songs")
-        .select('id, title, band_id')
-        .eq('band_id', bandId)
-        .order('created_at', { ascending: true })
-
-      if (error) {
-        console.error("Supabase select error:", error.message)
-        setSongs([])
-        setLoading(false)
-        return
-      }
-
-      if (dbSongs && dbSongs.length > 0) {
-        setSongs(dbSongs)
-      } else {
-        setSongs([])
-      }
+      const dbSongs = await songService.fetchAll(bandId)
+      setSongs(dbSongs || [])
       
       setLoading(false)
     } catch (error) {
-      console.error("曲の読み込みエラー:", error)
+      logger.error("曲の読み込みエラー:", error)
       setSongs([])
       setLoading(false)
     }
@@ -63,22 +48,14 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
   const addSongToDB = useCallback(async (title: string) => {
     try {
       if (!bandId) {
-        console.error('バンドIDが見つかりません。先にバンド名を設定してください。')
+        logger.error('バンドIDが見つかりません。先にバンド名を設定してください。')
         return
       }
 
-      const { data, error } = await supabase
-        .from("songs")
-        .insert([{ title, band_id: bandId }])
-        .select('id, title')
-
-      if (error) {
-        console.error("Supabase insert error:", error.message)
-      } else {
-        console.log("曲をデータベースに保存しました:", title)
-      }
+      await songService.create(title, bandId)
+      logger.log("曲をデータベースに保存しました:", title)
     } catch (error) {
-      console.error("曲の保存エラー:", error)
+      logger.error("曲の保存エラー:", error)
     }
   }, [bandId])
 
@@ -86,44 +63,38 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
   const deleteSongFromDB = useCallback(async (title: string) => {
     try {
       if (!bandId) {
-        console.error('バンドIDが見つかりません')
+        logger.error('バンドIDが見つかりません')
         return
       }
 
-      const { error } = await supabase
-        .from("songs")
-        .delete()
-        .eq('title', title)
-        .eq('band_id', bandId)
-
-      if (error) {
-        console.error("Supabase delete error:", error.message)
-      } else {
-        console.log("曲をデータベースから削除しました:", title)
-      }
+      await songService.delete(title, bandId)
+      logger.log("曲をデータベースから削除しました:", title)
     } catch (error) {
-      console.error("曲の削除エラー:", error)
+      logger.error("曲の削除エラー:", error)
     }
   }, [bandId])
 
   // 曲を追加
-  const addSong = useCallback((song: string) => {
-    const newSong: Song = {
-      id: `local_${performance.now()}`,
-      title: song
+  const addSong = useCallback(async (title: string) => {
+    // 重複チェック
+    if (songs.some(song => song.title === title)) {
+      logger.warn('同じ名前の曲がすでに存在します:', title)
+      return
     }
-    
-    setSongs((prev) => [...prev, newSong])
-    addSongToDB(song) // Supabaseに保存
-  }, [addSongToDB])
+
+    setSongs((prevSongs) => [...prevSongs, { id: `new-${Date.now()}`, title, band_id: bandId || '' }])
+    await addSongToDB(title)
+    await loadSongsFromDB() // データベースから最新のリストを再取得
+  }, [songs, bandId, addSongToDB, loadSongsFromDB])
 
   // 曲を削除
-  const deleteSong = useCallback((songToDelete: string) => {
-    setSongs((prev) => prev.filter((song) => song.title !== songToDelete))
-    deleteSongFromDB(songToDelete) // Supabaseから削除
-  }, [deleteSongFromDB])
+  const deleteSong = useCallback(async (title: string) => {
+    setSongs((prevSongs) => prevSongs.filter((song) => song.title !== title))
+    await deleteSongFromDB(title)
+    await loadSongsFromDB() // データベースから最新のリストを再取得
+  }, [deleteSongFromDB, loadSongsFromDB])
 
-  // バンドIDが変更されたときに曲を再読み込み
+  // 初回レンダリング時に曲を読み込み
   useEffect(() => {
     loadSongsFromDB()
   }, [loadSongsFromDB])

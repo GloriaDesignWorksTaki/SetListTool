@@ -18,6 +18,7 @@ import { useSetlist } from "@/hooks/useSetlist";
 import { useLogo } from "@/hooks/useLogo";
 import { useToast } from "@/hooks/useToast";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
+import { Song } from "@/types";
 const SetlistTool = () => {
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
@@ -109,7 +110,7 @@ const SetlistTool = () => {
         <div className="block">
           <H2Title title="Added Songs" />
           <div className="cardList">
-            {songs.map((song) => (
+            {songs.map((song: Song) => (
               <SongCard
                 key={song.id}
                 id={song.id}

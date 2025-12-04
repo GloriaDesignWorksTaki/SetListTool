@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/pages/api/supabaseClient'
+import { bandService } from '@/services/bandService'
+import { logger } from '@/utils/logger'
 
 interface UseLogoReturn {
   logoUrl: string
@@ -27,35 +28,12 @@ export const useLogo = (bandId: string | null): UseLogoReturn => {
         return
       }
 
-      const { data: band, error } = await supabase
-        .from('bands')
-        .select('logo_url')
-        .eq('id', bandId)
-        .single()
-
-      if (error) {
-        // logo_urlカラムが存在しない場合は無視
-        if (error.code === '42703') {
-          console.log('logo_urlカラムが存在しません。データベースにカラムを追加してください。')
-          setLogoUrl('')
-          setLoading(false)
-          return
-        }
-        console.error('ロゴ取得エラー:', error)
-        setLogoUrl('')
-        setLoading(false)
-        return
-      }
-
-      if (band?.logo_url) {
-        setLogoUrl(band.logo_url)
-      } else {
-        setLogoUrl('')
-      }
+      const logoUrlResult = await bandService.getLogoUrl(bandId)
+      setLogoUrl(logoUrlResult || '')
 
       setLoading(false)
     } catch (error) {
-      console.error('ロゴ取得エラー:', error)
+      logger.error('ロゴ取得エラー:', error)
       setLogoUrl('')
       setLoading(false)
     }

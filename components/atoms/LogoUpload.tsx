@@ -6,11 +6,10 @@ import { FaTrashAlt } from 'react-icons/fa'
 
 interface LogoUploadProps {
   onLogoUpload: (logoUrl: string) => void
-  onError?: (message: string) => void
   currentLogo?: string
 }
 
-export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, onError, currentLogo }) => {
+export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLogo }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -26,7 +25,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, onError, c
     if (file && file.type.startsWith('image/')) {
       const maxSize = 500 * 1024
       if (file.size > maxSize) {
-        onError?.('ファイルサイズが大きすぎます。500KB以下のファイルを選択してください。')
+        alert('ファイルサイズが大きすぎます。500KB以下のファイルを選択してください。')
         return
       }
 
@@ -38,7 +37,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, onError, c
       }
       reader.readAsDataURL(file)
     } else {
-      onError?.('画像ファイルを選択してください。')
+      alert('画像ファイルを選択してください。')
     }
   }
 

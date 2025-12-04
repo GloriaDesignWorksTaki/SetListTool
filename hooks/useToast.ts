@@ -8,25 +8,25 @@ interface UseToastReturn {
 }
 
 /**
- * トースト通知の管理を行うカスタムフック
- * 
+ * トースト通知を管理するカスタムフック
  * @returns トーストメッセージ、表示状態、表示・非表示関数
  */
 export const useToast = (): UseToastReturn => {
   const [message, setMessage] = useState<string>('')
   const [isVisible, setIsVisible] = useState<boolean>(false)
 
-  const showToast = useCallback((toastMessage: string) => {
-    setMessage(toastMessage)
+  const showToast = useCallback((msg: string) => {
+    setMessage(msg)
     setIsVisible(true)
+    
+    // 3秒後に自動的に非表示
+    setTimeout(() => {
+      setIsVisible(false)
+    }, 3000)
   }, [])
 
   const hideToast = useCallback(() => {
     setIsVisible(false)
-    // アニメーション後にメッセージをクリア
-    setTimeout(() => {
-      setMessage('')
-    }, 300)
   }, [])
 
   return {

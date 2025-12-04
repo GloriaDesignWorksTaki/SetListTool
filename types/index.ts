@@ -8,13 +8,14 @@ export type SetlistItem = {
 export type Song = {
   id: string;
   title: string;
+  band_id: string;
 };
 
 export type Band = {
   id: string;
   name: string;
+  logo_url: string | null;
   user_id: string;
-  logo_url?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }; 
