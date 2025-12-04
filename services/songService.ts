@@ -42,7 +42,7 @@ export const songService = {
       const { data, error } = await supabase
         .from('songs')
         .insert([{ title, band_id: bandId }])
-        .select('id, title')
+        .select('id, title, band_id')
         .single()
 
       if (error) {
