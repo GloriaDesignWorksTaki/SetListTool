@@ -10,6 +10,7 @@ import Date from "@/components/atoms/form/Date";
 import Input from "@/components/atoms/form/Input";
 import Submit from "@/components/atoms/form/Submit";
 import { Toast } from "@/components/atoms/Toast";
+import { PDFPreviewModal } from "@/components/atoms/PDFPreviewModal";
 import { FiPlus } from "react-icons/fi";
 import { FaFilePdf } from "react-icons/fa";
 import { useBandId } from "@/hooks/useBandId";
@@ -39,6 +40,8 @@ const SetlistTool = () => {
   const { logoUrl } = useLogo(bandId);
   const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast();
   const { generatePDF } = usePDFGenerator();
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   // ドラッグ&ドロップ用のセンサー設定
   const sensors = useSensors(
@@ -86,7 +89,7 @@ const SetlistTool = () => {
   // PDFプレビューを開く
   const openPDFPreview = async () => {
     try {
-      await generatePDF({
+      const url = await generatePDF({
         name: bandName,
         date,
         venue,
@@ -94,14 +97,31 @@ const SetlistTool = () => {
         eventTitle,
         logoUrl,
       });
+      setPdfUrl(url);
+      setIsPDFModalOpen(true);
     } catch (error) {
       showToast('PDFの生成に失敗しました');
+    }
+  };
+
+  // PDFモーダルを閉じる
+  const closePDFModal = () => {
+    setIsPDFModalOpen(false);
+    // メモリリーク防止のため、URLを解放
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+      setPdfUrl(null);
     }
   };
 
   return (
     <div className="setlistContent">
       <Toast message={toastMessage} isVisible={isToastVisible} onClose={hideToast} />
+      <PDFPreviewModal
+        isOpen={isPDFModalOpen}
+        onClose={closePDFModal}
+        pdfUrl={pdfUrl}
+      />
       <div className="container">
         <div className="block">
           <H2Title title="Song Title" />
