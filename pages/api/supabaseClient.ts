@@ -1,21 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// 実行時（クライアント側）のみ環境変数をチェック
-if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
-  console.error('Missing Supabase environment variables:', {
-    url: supabaseUrl ? 'Set' : 'Missing',
-    key: supabaseAnonKey ? 'Set' : 'Missing'
-  });
-  throw new Error(
-    'Supabase環境変数が設定されていません。Vercelのダッシュボードで環境変数（NEXT_PUBLIC_SUPABASE_URLとNEXT_PUBLIC_SUPABASE_ANON_KEY）を設定してください。'
-  );
-}
-
-// ビルド時には環境変数がなくてもビルドを通すために、空文字列でクライアントを作成
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
