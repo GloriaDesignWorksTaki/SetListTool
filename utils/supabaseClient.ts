@@ -14,5 +14,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // NextAuthのセッションからSupabaseクライアントを認証状態にする関数
 export const setSupabaseAuth = async (session: any) => {
   return;
-  
 };

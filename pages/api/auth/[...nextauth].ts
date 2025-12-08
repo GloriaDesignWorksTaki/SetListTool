@@ -134,15 +134,6 @@ export default NextAuth({
   },
   // セッション更新の設定
   useSecureCookies: process.env.NODE_ENV === 'production',
-  secret: process.env.NEXTAUTH_SECRET || (() => {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[NextAuth] NEXTAUTH_SECRET is required in production');
-      throw new Error('NEXTAUTH_SECRET environment variable is required');
-    }
-    return 'development-secret-key-change-in-production';
-  })(),
-  // 本番環境でのURL設定
-  ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
-  // エラーハンドリング
+  secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
 });
