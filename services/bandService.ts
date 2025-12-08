@@ -38,19 +38,30 @@ export const bandService = {
    */
   async getBandByUserId(userId: string): Promise<Band | null> {
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        logger.error('認証エラー:', authError)
+        throw new Error(`認証が必要です: ${authError?.message || 'ユーザーが取得できませんでした'}`)
+      }
+
       const { data, error } = await supabase
         .from('bands')
-        .select('id, name, logo_url, user_id, created_at, updated_at')
+        .select('id, name, logo_url, user_id, created_at')
         .eq('user_id', userId)
         .maybeSingle()
 
       if (error) {
         logger.error('バンド情報取得エラー:', error)
-        // テーブルが存在しない場合は無視
+        
         if (error.code === '42703' || error.code === '42P01') {
           return null
         }
-        throw new Error(`バンド情報取得に失敗しました: ${error.message}`)
+        
+        if (error.code === 'PGRST116') {
+          return null
+        }
+        
+        throw new Error(`バンド情報取得に失敗しました: ${error.message} (code: ${error.code})`)
       }
 
       return data || null
@@ -69,7 +80,7 @@ export const bandService = {
     try {
       const { data, error } = await supabase
         .from('bands')
-        .select('id, name, logo_url, user_id, created_at, updated_at')
+        .select('id, name, logo_url, user_id, created_at')
         .eq('id', bandId)
         .single()
 
@@ -106,7 +117,7 @@ export const bandService = {
             logo_url: logoUrl,
           },
         ])
-        .select('id, name, logo_url, user_id, created_at, updated_at')
+        .select('id, name, logo_url, user_id, created_at')
         .single()
 
       if (error) {

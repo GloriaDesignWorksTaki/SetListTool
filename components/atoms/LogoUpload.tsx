@@ -14,10 +14,11 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLog
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // currentLogoが変更されたときにpreviewUrlを更新
   useEffect(() => {
-    if (currentLogo) {
+    if (currentLogo && currentLogo.trim() !== '') {
       setPreviewUrl(currentLogo)
+    } else {
+      setPreviewUrl(null)
     }
   }, [currentLogo])
 
@@ -73,7 +74,6 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({ onLogoUpload, currentLog
   }
 
   const handleRemoveLogo = () => {
-    console.log('ロゴ削除実行')
     setPreviewUrl(null)
     onLogoUpload('')
   }

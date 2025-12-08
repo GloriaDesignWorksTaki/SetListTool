@@ -14,11 +14,10 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    console.log('SupabaseAuthProvider - Session status:', status);
-    console.log('SupabaseAuthProvider - Session data:', session);
-    
-    if (session) {
-      setSupabaseAuth(session);
+    if (session && session.accessToken) {
+      setSupabaseAuth(session).catch((error) => {
+        console.error('Supabase認証設定エラー:', error);
+      });
     }
   }, [session, status]);
 
@@ -30,7 +29,7 @@ const App = ({ Component, pageProps }: AppProps) => {
   const isLoginPage = router.pathname === '/login';
 
   return (
-    <SessionProvider 
+    <SessionProvider
       session={pageProps.session}
       refetchInterval={5 * 60} // 5分ごとにセッションを更新
       refetchOnWindowFocus={true} // ウィンドウがフォーカスされたときにセッションを更新
