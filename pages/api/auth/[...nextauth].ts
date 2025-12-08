@@ -12,47 +12,31 @@ export default NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.error('[NextAuth] Credentials missing');
           return null;
         }
 
         try {
-          // 環境変数の確認
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-          const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-          if (!supabaseUrl || !supabaseKey) {
-            console.error('[NextAuth] Supabase environment variables missing', {
-              hasUrl: !!supabaseUrl,
-              hasKey: !!supabaseKey
-            });
-            return null;
-          }
-
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
-          if (error) {
-            console.error('[NextAuth] Supabase sign in error:', error.message);
+          if (error || !data.user) {
+            console.error("Supabase認証エラー:", error);
             return null;
           }
 
-          if (!data.user || !data.session) {
-            console.error('[NextAuth] No user or session returned');
-            return null;
-          }
+          console.log("認証成功:", data.user.email);
 
           return {
             id: data.user.id,
             email: data.user.email,
             name: data.user.user_metadata?.name || data.user.email,
-            accessToken: data.session.access_token,
-            refreshToken: data.session.refresh_token,
+            accessToken: data.session?.access_token,
+            refreshToken: data.session?.refresh_token,
           };
-        } catch (error: any) {
-          console.error('[NextAuth] Authorization error:', error?.message || error);
+        } catch (error) {
+          console.error("認証エラー:", error);
           return null;
         }
       },
@@ -60,36 +44,22 @@ export default NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      try {
-        if (user) {
-          token.id = user.id;
-          token.accessToken = user.accessToken;
-          token.refreshToken = user.refreshToken;
-        }
-        return token;
-      } catch (error: any) {
-        console.error('[NextAuth] JWT callback error:', error?.message || error);
-        return token;
+      if (user) {
+        console.log("JWT callback - User:", user.email);
+        token.id = user.id;
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
       }
+      return token;
     },
     async session({ session, token }) {
-      try {
-        if (token && session) {
-          if (token.id) {
-            session.user.id = token.id as string;
-          }
-          if (token.accessToken) {
-            session.accessToken = token.accessToken as string;
-          }
-          if (token.refreshToken) {
-            session.refreshToken = token.refreshToken as string;
-          }
-        }
-        return session;
-      } catch (error: any) {
-        console.error('[NextAuth] Session callback error:', error?.message || error);
-        return session;
+      if (token) {
+        console.log("Session callback - Token ID:", token.id);
+        session.user.id = token.id as string;
+        session.accessToken = token.accessToken as string;
+        session.refreshToken = token.refreshToken as string;
       }
+      return session;
     },
   },
   pages: {
@@ -132,8 +102,9 @@ export default NextAuth({
       }
     }
   },
+  // 開発環境でのデバッグ
+  debug: true,
   // セッション更新の設定
   useSecureCookies: process.env.NODE_ENV === 'production',
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
 });
