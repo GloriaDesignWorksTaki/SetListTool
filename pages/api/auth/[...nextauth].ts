@@ -2,6 +2,34 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabase } from "@/utils/supabaseClient";
 
+// 環境変数の検証
+const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+const nextAuthUrl = process.env.NEXTAUTH_URL;
+
+if (!nextAuthSecret) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXTAUTH_SECRET environment variable is required in production. " +
+      "Please set it in your Vercel project settings under Environment Variables. " +
+      "You can generate one using: openssl rand -base64 32"
+    );
+  } else {
+    console.warn(
+      "⚠️  WARNING: NEXTAUTH_SECRET is not set. " +
+      "Please add it to your .env.local file for development. " +
+      "You can generate one using: openssl rand -base64 32"
+    );
+  }
+}
+
+// NEXTAUTH_URLの検証（本番環境では自動検出されるが、明示的に設定することを推奨）
+if (!nextAuthUrl && process.env.NODE_ENV === "production") {
+  console.warn(
+    "⚠️  WARNING: NEXTAUTH_URL is not set. " +
+    "It's recommended to set this in production for better security."
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -89,6 +117,7 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/login",
+    signOut: "/login",
   },
 
   session: {
@@ -96,7 +125,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 365 * 24 * 60 * 60, // 1年
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: nextAuthSecret || (process.env.NODE_ENV === "development" ? "development-secret-key-change-in-production" : undefined),
   debug: process.env.NODE_ENV === "development",
 };
 
