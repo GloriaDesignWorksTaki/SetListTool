@@ -60,20 +60,36 @@ export default NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.accessToken = user.accessToken;
-        token.refreshToken = user.refreshToken;
+      try {
+        if (user) {
+          token.id = user.id;
+          token.accessToken = user.accessToken;
+          token.refreshToken = user.refreshToken;
+        }
+        return token;
+      } catch (error: any) {
+        console.error('[NextAuth] JWT callback error:', error?.message || error);
+        return token;
       }
-      return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.accessToken = token.accessToken as string;
-        session.refreshToken = token.refreshToken as string;
+      try {
+        if (token && session) {
+          if (token.id) {
+            session.user.id = token.id as string;
+          }
+          if (token.accessToken) {
+            session.accessToken = token.accessToken as string;
+          }
+          if (token.refreshToken) {
+            session.refreshToken = token.refreshToken as string;
+          }
+        }
+        return session;
+      } catch (error: any) {
+        console.error('[NextAuth] Session callback error:', error?.message || error);
+        return session;
       }
-      return session;
     },
   },
   pages: {
@@ -119,6 +135,5 @@ export default NextAuth({
   // セッション更新の設定
   useSecureCookies: process.env.NODE_ENV === 'production',
   secret: process.env.NEXTAUTH_SECRET,
-  // 本番環境でのURL設定
-  ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
+  debug: process.env.NODE_ENV === 'development',
 });
