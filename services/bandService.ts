@@ -38,12 +38,6 @@ export const bandService = {
    */
   async getBandByUserId(userId: string): Promise<Band | null> {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError || !user) {
-        logger.error('認証エラー:', authError)
-        throw new Error(`認証が必要です: ${authError?.message || 'ユーザーが取得できませんでした'}`)
-      }
-
       const { data, error } = await supabase
         .from('bands')
         .select('id, name, logo_url, user_id, created_at')
