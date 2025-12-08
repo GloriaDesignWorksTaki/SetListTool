@@ -27,7 +27,6 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
       setLoading(true)
       
       if (!bandId) {
-        logger.log('バンドIDが見つからないため、データベースからの読み込みをスキップ')
         setSongs([])
         setLoading(false)
         return
@@ -53,7 +52,6 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
       }
 
       await songService.create(title, bandId)
-      logger.log("曲をデータベースに保存しました:", title)
     } catch (error) {
       logger.error("曲の保存エラー:", error)
     }
@@ -68,7 +66,6 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
       }
 
       await songService.delete(title, bandId)
-      logger.log("曲をデータベースから削除しました:", title)
     } catch (error) {
       logger.error("曲の削除エラー:", error)
     }
@@ -76,9 +73,7 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
 
   // 曲を追加
   const addSong = useCallback(async (title: string) => {
-    // 重複チェック
     if (songs.some(song => song.title === title)) {
-      logger.warn('同じ名前の曲がすでに存在します:', title)
       return
     }
 

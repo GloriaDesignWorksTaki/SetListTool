@@ -37,12 +37,8 @@ export const usePDFGenerator = (): UsePDFGeneratorReturn => {
     logoUrl?: string
   }) => {
     try {
-      logger.log('PDF生成開始...')
-
-      // フォントを登録（PDF生成前に必要）
       registerFonts()
 
-      // PDF生成（型エラー回避のため、動的にインポート）
       const { SetlistDocument: PDFDocument } = await import('@/components/pdf/SetlistDocument')
       const blob = await pdf(
         React.createElement(PDFDocument, {
@@ -55,13 +51,7 @@ export const usePDFGenerator = (): UsePDFGeneratorReturn => {
         }) as any
       ).toBlob()
 
-      logger.log('Blob生成完了:', blob.size, 'bytes')
-
-      // Blob URLを生成
       const url = URL.createObjectURL(blob)
-      logger.log('Blob URL生成完了:', url)
-
-      // Blob URLを返す（モーダルで使用）
       return url
     } catch (error) {
       logger.error('PDF生成エラー:', error)
