@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/pages/api/supabaseClient'
+import { supabase } from '@/utils/supabaseClient'
 import { useRouter } from 'next/router'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import Image from 'next/image'

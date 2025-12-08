@@ -28,8 +28,6 @@ export const registerFonts = () => {
     })
     fontsRegistered = true
   } catch (error) {
-    // フォントが既に登録されている場合はエラーを無視
-    console.warn('フォント登録エラー（既に登録されている可能性があります）:', error)
     fontsRegistered = true
   }
 }

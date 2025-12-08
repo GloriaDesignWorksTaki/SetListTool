@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/pages/api/supabaseClient'
+import { supabase } from '@/utils/supabaseClient'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
@@ -25,7 +25,12 @@ export default function Settings() {
   useEffect(() => {
     const fetchBand = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError) {
+          logger.error('認証エラー:', authError)
+          router.push('/login')
+          return
+        }
         if (!user) {
           router.push('/login')
           return
@@ -35,15 +40,15 @@ export default function Settings() {
 
         if (band) {
           setBandName(band.name || '')
-          setLogoUrl(band.logo_url || '')
-          setLogoIsLight(false) // 一時的にfalseに設定
+          const logoUrlValue = band.logo_url && band.logo_url.trim() !== '' ? band.logo_url : ''
+          setLogoUrl(logoUrlValue)
+          setLogoIsLight(false)
         } else {
-          // バンドデータが存在しない場合は空文字を設定
           setBandName('')
           setLogoUrl('')
           setLogoIsLight(false)
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error('エラーが発生しました:', error)
         // エラー時も初期化
         setBandName('')
@@ -67,13 +72,21 @@ export default function Settings() {
 
       const existingBandId = await bandService.getBandId(user.id)
 
+      const logoUrlForSave = logoUrlToSave && logoUrlToSave.trim() !== '' ? logoUrlToSave : null
+
       if (existingBandId) {
-        logger.log('バンド更新:', { name: bandName, logo_url: logoUrlToSave })
         try {
           await bandService.update(existingBandId, {
             name: bandName,
-            logo_url: logoUrlToSave,
+            logo_url: logoUrlForSave || undefined,
           })
+          await new Promise(resolve => setTimeout(resolve, 200))
+
+          const updatedBand = await bandService.getBandByUserId(user.id)
+          if (updatedBand) {
+            const updatedLogoUrl = updatedBand.logo_url && updatedBand.logo_url.trim() !== '' ? updatedBand.logo_url : ''
+            setLogoUrl(updatedLogoUrl)
+          }
           showToast('設定を更新しました')
           setGlobalBandName(bandName || 'No Band Name')
         } catch (error) {
@@ -82,14 +95,20 @@ export default function Settings() {
         }
       } else {
         try {
-          await bandService.create(user.id, bandName, logoUrlToSave)
+          await bandService.create(user.id, bandName, logoUrlForSave || undefined)
+          await new Promise(resolve => setTimeout(resolve, 200))
+          const createdBand = await bandService.getBandByUserId(user.id)
+          if (createdBand) {
+            const createdLogoUrl = createdBand.logo_url && createdBand.logo_url.trim() !== '' ? createdBand.logo_url : ''
+            setLogoUrl(createdLogoUrl)
+          }
           showToast('バンド名を保存しました')
         } catch (error) {
           logger.error('バンド名の保存に失敗しました:', error)
           showToast('バンド名の保存に失敗しました')
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('エラーが発生しました:', error)
       showToast('エラーが発生しました')
     } finally {
@@ -130,15 +149,12 @@ export default function Settings() {
           <div className="block">
             <LogoUpload
               onLogoUpload={(url) => {
-                logger.log('ロゴアップロード/削除:', url)
                 setLogoUrl(url)
-                // ロゴがアップロードまたは削除されたら即座に保存
                 setTimeout(() => {
-                  // 最新のURLを直接渡して保存
                   handleUpdateBandNameWithLogo(url)
                 }, 100)
               }}
-              currentLogo={logoUrl}
+              currentLogo={logoUrl && logoUrl.trim() !== '' ? logoUrl : undefined}
             />
           </div>
           <div className="block">

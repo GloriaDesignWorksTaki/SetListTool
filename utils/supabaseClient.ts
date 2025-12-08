@@ -12,12 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // NextAuthのセッションからSupabaseクライアントを認証状態にする関数
-export const setSupabaseAuth = (session: any) => {
+export const setSupabaseAuth = async (session: any) => {
   if (session?.accessToken) {
-    // NextAuthのセッションからSupabaseのアクセストークンを設定
-    supabase.auth.setSession({
-      access_token: session.accessToken,
-      refresh_token: session.refreshToken || '',
-    });
+    try {
+      await supabase.auth.setSession({
+        access_token: session.accessToken,
+        refresh_token: session.refreshToken || '',
+      });
+    } catch (error) {
+      console.error('Supabaseセッション設定エラー:', error);
+    }
   }
 };

@@ -1,4 +1,4 @@
-import { supabase } from '@/pages/api/supabaseClient'
+import { supabase } from '@/utils/supabaseClient'
 import { Song } from '@/types'
 import { logger } from '@/utils/logger'
 

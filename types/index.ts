@@ -17,5 +17,5 @@ export type Band = {
   logo_url: string | null;
   user_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string; // オプショナル（テーブルに存在しない可能性があるため）
 }; 
