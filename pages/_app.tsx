@@ -7,7 +7,7 @@ import Footer from "@/components/organisms/Footer";
 import { useRouter } from "next/router";
 import { BandProvider } from "@/contexts/BandContext";
 import { useEffect } from "react";
-import { setSupabaseAuth } from "./api/supabaseClient";
+import { setSupabaseAuth } from "@/utils/supabaseClient";
 
 // Supabase認証を設定するコンポーネント
 const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {

@@ -14,7 +14,7 @@
     "@react-pdf/renderer": "^4.3.0",
     "@supabase/supabase-js": "^2.53.0",
     "dnd-kit": "^0.0.2",
-    "next": "15.1.6",
+    "next": "^16.0.7",
     "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

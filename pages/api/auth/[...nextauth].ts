@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/utils/supabaseClient";
 
 export default NextAuth({
   providers: [
