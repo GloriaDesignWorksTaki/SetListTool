@@ -60,20 +60,36 @@ export default NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.accessToken = user.accessToken;
-        token.refreshToken = user.refreshToken;
+      try {
+        if (user) {
+          token.id = user.id;
+          token.accessToken = user.accessToken;
+          token.refreshToken = user.refreshToken;
+        }
+        return token;
+      } catch (error: any) {
+        console.error('[NextAuth] JWT callback error:', error?.message || error);
+        return token;
       }
-      return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.accessToken = token.accessToken as string;
-        session.refreshToken = token.refreshToken as string;
+      try {
+        if (token && session) {
+          if (token.id) {
+            session.user.id = token.id as string;
+          }
+          if (token.accessToken) {
+            session.accessToken = token.accessToken as string;
+          }
+          if (token.refreshToken) {
+            session.refreshToken = token.refreshToken as string;
+          }
+        }
+        return session;
+      } catch (error: any) {
+        console.error('[NextAuth] Session callback error:', error?.message || error);
+        return session;
       }
-      return session;
     },
   },
   pages: {
@@ -118,7 +134,15 @@ export default NextAuth({
   },
   // セッション更新の設定
   useSecureCookies: process.env.NODE_ENV === 'production',
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || (() => {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[NextAuth] NEXTAUTH_SECRET is required in production');
+      throw new Error('NEXTAUTH_SECRET environment variable is required');
+    }
+    return 'development-secret-key-change-in-production';
+  })(),
   // 本番環境でのURL設定
   ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
+  // エラーハンドリング
+  debug: process.env.NODE_ENV === 'development',
 });
