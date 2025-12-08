@@ -1,46 +1,38 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabase } from "@/utils/supabaseClient";
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "メールアドレス", type: "text", placeholder: "メールアドレス" },
+        email: {
+          label: "メールアドレス",
+          type: "text",
+          placeholder: "メールアドレス",
+        },
         password: { label: "パスワード", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.error('[NextAuth] Credentials missing');
+          console.error("[NextAuth] Credentials missing");
           return null;
         }
 
         try {
-          // 環境変数の確認
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-          const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-          if (!supabaseUrl || !supabaseKey) {
-            console.error('[NextAuth] Supabase environment variables missing', {
-              hasUrl: !!supabaseUrl,
-              hasKey: !!supabaseKey
-            });
-            return null;
-          }
-
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
           if (error) {
-            console.error('[NextAuth] Supabase sign in error:', error.message);
+            console.error("[NextAuth] Supabase sign in error:", error.message);
             return null;
           }
 
           if (!data.user || !data.session) {
-            console.error('[NextAuth] No user or session returned');
+            console.error("[NextAuth] No user or session returned");
             return null;
           }
 
@@ -50,56 +42,62 @@ export default NextAuth({
             name: data.user.user_metadata?.name || data.user.email,
             accessToken: data.session.access_token,
             refreshToken: data.session.refresh_token,
-          };
+          } as any;
         } catch (error: any) {
-          console.error('[NextAuth] Authorization error:', error?.message || error);
+          console.error(
+            "[NextAuth] Authorization error:",
+            error?.message || error
+          );
           return null;
         }
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       try {
         if (user) {
-          token.id = user.id;
-          token.accessToken = user.accessToken;
-          token.refreshToken = user.refreshToken;
+          const u = user as any;
+          token.id = u.id;
+          token.accessToken = u.accessToken;
+          token.refreshToken = u.refreshToken;
         }
         return token;
       } catch (error: any) {
-        console.error('[NextAuth] JWT callback error:', error?.message || error);
+        console.error("[NextAuth] JWT callback error:", error?.message || error);
         return token;
       }
     },
     async session({ session, token }) {
       try {
-        if (token && session) {
-          if (token.id) {
-            session.user.id = token.id as string;
-          }
-          if (token.accessToken) {
-            session.accessToken = token.accessToken as string;
-          }
-          if (token.refreshToken) {
-            session.refreshToken = token.refreshToken as string;
-          }
+        if (session.user && token) {
+          (session.user as any).id = token.id as string;
+          (session as any).accessToken = token.accessToken as string;
+          (session as any).refreshToken = token.refreshToken as string;
         }
         return session;
       } catch (error: any) {
-        console.error('[NextAuth] Session callback error:', error?.message || error);
+        console.error(
+          "[NextAuth] Session callback error:",
+          error?.message || error
+        );
         return session;
       }
     },
   },
+
   pages: {
     signIn: "/login",
   },
+
   session: {
     strategy: "jwt",
-    maxAge: 365 * 24 * 60 * 60, // 1年間
+    maxAge: 365 * 24 * 60 * 60, // 1年
   },
 
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-});
+};
+
+export default NextAuth(authOptions);
