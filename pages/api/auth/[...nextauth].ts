@@ -12,16 +12,35 @@ export default NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.error('[NextAuth] Credentials missing');
           return null;
         }
 
         try {
+          // 環境変数の確認
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+          if (!supabaseUrl || !supabaseKey) {
+            console.error('[NextAuth] Supabase environment variables missing', {
+              hasUrl: !!supabaseUrl,
+              hasKey: !!supabaseKey
+            });
+            return null;
+          }
+
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
-          if (error || !data.user) {
+          if (error) {
+            console.error('[NextAuth] Supabase sign in error:', error.message);
+            return null;
+          }
+
+          if (!data.user || !data.session) {
+            console.error('[NextAuth] No user or session returned');
             return null;
           }
 
@@ -29,10 +48,11 @@ export default NextAuth({
             id: data.user.id,
             email: data.user.email,
             name: data.user.user_metadata?.name || data.user.email,
-            accessToken: data.session?.access_token,
-            refreshToken: data.session?.refresh_token,
+            accessToken: data.session.access_token,
+            refreshToken: data.session.refresh_token,
           };
-        } catch (error) {
+        } catch (error: any) {
+          console.error('[NextAuth] Authorization error:', error?.message || error);
           return null;
         }
       },
@@ -98,5 +118,7 @@ export default NextAuth({
   },
   // セッション更新の設定
   useSecureCookies: process.env.NODE_ENV === 'production',
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
-}); 
+  secret: process.env.NEXTAUTH_SECRET,
+  // 本番環境でのURL設定
+  ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
+});
