@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/utils/supabaseClient'
 import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
 import { LogoUpload } from '@/components/atoms/LogoUpload'
@@ -19,24 +19,23 @@ export default function Settings() {
   const [logoIsLight, setLogoIsLight] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { data: session, status } = useSession()
   const { setBandName: setGlobalBandName } = useBand()
   const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast()
 
   useEffect(() => {
     const fetchBand = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError) {
-          logger.error('認証エラー:', authError)
-          router.push('/login')
-          return
-        }
-        if (!user) {
-          router.push('/login')
-          return
-        }
+      if (status === 'loading') {
+        return
+      }
+      
+      if (!session?.user?.id) {
+        router.push('/login')
+        return
+      }
 
-        const band = await bandService.getBandByUserId(user.id)
+      try {
+        const band = await bandService.getBandByUserId(session.user.id)
 
         if (band) {
           setBandName(band.name || '')
@@ -57,20 +56,19 @@ export default function Settings() {
       }
     }
     fetchBand()
-  }, [router])
+  }, [session, status, router])
 
   const handleUpdateBandNameWithLogo = async (logoUrlToSave: string) => {
     try {
       setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
 
-      if (!user) {
+      if (!session?.user?.id) {
         showToast('ログインが必要です')
         router.push('/login')
         return
       }
 
-      const existingBandId = await bandService.getBandId(user.id)
+      const existingBandId = await bandService.getBandId(session.user.id)
 
       const logoUrlForSave = logoUrlToSave && logoUrlToSave.trim() !== '' ? logoUrlToSave : null
 
@@ -82,7 +80,7 @@ export default function Settings() {
           })
           await new Promise(resolve => setTimeout(resolve, 200))
 
-          const updatedBand = await bandService.getBandByUserId(user.id)
+          const updatedBand = await bandService.getBandByUserId(session.user.id)
           if (updatedBand) {
             const updatedLogoUrl = updatedBand.logo_url && updatedBand.logo_url.trim() !== '' ? updatedBand.logo_url : ''
             setLogoUrl(updatedLogoUrl)
@@ -95,9 +93,9 @@ export default function Settings() {
         }
       } else {
         try {
-          await bandService.create(user.id, bandName, logoUrlForSave || undefined)
+          await bandService.create(session.user.id, bandName, logoUrlForSave || undefined)
           await new Promise(resolve => setTimeout(resolve, 200))
-          const createdBand = await bandService.getBandByUserId(user.id)
+          const createdBand = await bandService.getBandByUserId(session.user.id)
           if (createdBand) {
             const createdLogoUrl = createdBand.logo_url && createdBand.logo_url.trim() !== '' ? createdBand.logo_url : ''
             setLogoUrl(createdLogoUrl)

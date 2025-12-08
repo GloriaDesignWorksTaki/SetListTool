@@ -14,9 +14,17 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession();
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
     if (session && session.accessToken) {
       setSupabaseAuth(session).catch((error) => {
         console.error('Supabase認証設定エラー:', error);
+      });
+    } else {
+      // セッションがない場合もSupabaseセッションをクリア
+      setSupabaseAuth(null).catch((error) => {
+        console.error('Supabaseセッションクリアエラー:', error);
       });
     }
   }, [session, status]);
