@@ -34,7 +34,7 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 const App = ({ Component, pageProps }: AppProps) => {
   const router = useRouter();
-  const isLoginPage = router.pathname === '/login';
+  const isAuthPage = router.pathname === '/login' || router.pathname === '/signup';
 
   return (
     <SessionProvider
@@ -44,9 +44,9 @@ const App = ({ Component, pageProps }: AppProps) => {
     >
       <SupabaseAuthProvider>
         <BandProvider>
-          {!isLoginPage && <Header />}
+          {!isAuthPage && <Header />}
           <Component {...pageProps} />
-          {!isLoginPage && <Footer />}
+          {!isAuthPage && <Footer />}
         </BandProvider>
       </SupabaseAuthProvider>
     </SessionProvider>

@@ -18,4 +18,5 @@ export type Band = {
   user_id: string;
   created_at: string;
   updated_at?: string; // オプショナル（テーブルに存在しない可能性があるため）
+  genre?: string | null; // バンドジャンル
 }; 
