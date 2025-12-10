@@ -1,5 +1,7 @@
 import Auth from '@/components/organisms/Auth'
 import Head from 'next/head'
+import { LoginWithWelcome } from '@/components/organisms/LoginWithWelcome'
+
 export default function LoginPage() {
   return (
     <main>
@@ -10,7 +12,7 @@ export default function LoginPage() {
       </Head>
       <section>
         <div className="wrapper">
-          <Auth />
+          <LoginWithWelcome />
         </div>
       </section>
     </main>

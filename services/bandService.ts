@@ -40,7 +40,7 @@ export const bandService = {
     try {
       const { data, error } = await supabase
         .from('bands')
-        .select('id, name, logo_url, user_id, created_at')
+        .select('id, name, logo_url, user_id, created_at, genre')
         .eq('user_id', userId)
         .maybeSingle()
 
@@ -74,7 +74,7 @@ export const bandService = {
     try {
       const { data, error } = await supabase
         .from('bands')
-        .select('id, name, logo_url, user_id, created_at')
+        .select('id, name, logo_url, user_id, created_at, genre')
         .eq('id', bandId)
         .single()
 
@@ -98,9 +98,10 @@ export const bandService = {
    * @param userId - ユーザーID
    * @param name - バンド名
    * @param logoUrl - ロゴURL（オプション）
+   * @param genre - バンドジャンル（オプション）
    * @returns 作成されたバンド
    */
-  async create(userId: string, name: string, logoUrl?: string): Promise<Band> {
+  async create(userId: string, name: string, logoUrl?: string, genre?: string): Promise<Band> {
     try {
       const { data, error } = await supabase
         .from('bands')
@@ -109,9 +110,10 @@ export const bandService = {
             user_id: userId,
             name,
             logo_url: logoUrl,
+            genre: genre || null,
           },
         ])
-        .select('id, name, logo_url, user_id, created_at')
+        .select('id, name, logo_url, user_id, created_at, genre')
         .single()
 
       if (error) {
@@ -137,7 +139,7 @@ export const bandService = {
    */
   async update(
     bandId: string,
-    updates: { name?: string; logo_url?: string }
+    updates: { name?: string; logo_url?: string; genre?: string }
   ): Promise<void> {
     try {
       const { error } = await supabase

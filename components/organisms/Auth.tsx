@@ -121,8 +121,12 @@ export default function Auth() {
         </button>
 
         <p className="signUpButton" onClick={() => {
-          setIsLogin(!isLogin)
-          setMessage('')
+          if (isLogin) {
+            router.push('/signup')
+          } else {
+            setIsLogin(true)
+            setMessage('')
+          }
         }}>
           {isLogin ? 'サインアップはこちら' : 'ログインはこちら'}
         </p>
