@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect } from 'react'
-import styles from './Modal.module.css'
 
 interface ModalProps {
   isOpen: boolean
@@ -33,12 +32,12 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {title && <h2 className={styles.title}>{title}</h2>}
-        <div className={styles.content}>{children}</div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        {title && <h2 className="modal-title">{title}</h2>}
+        <div className="modal-body">{children}</div>
         {showCloseButton && (
-          <button className={styles.closeButton} onClick={onClose}>
+          <button className="modal-close-button" onClick={onClose}>
             閉じる
           </button>
         )}

@@ -55,7 +55,7 @@ export function LoginWithWelcome() {
 
             // Welcomeポップアップを表示
             setShowWelcomeModal(true)
-            
+
             // ハッシュをクリア
             window.history.replaceState(null, '', '/login')
           }
