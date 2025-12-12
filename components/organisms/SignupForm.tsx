@@ -193,8 +193,12 @@ export default function SignupForm() {
               </label>
             </div>
 
-            <button type="submit" disabled={loading} className="submitButton">
-              {loading ? '処理中...' : '送信'}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className={`submitButton ${loading ? 'loading' : ''}`}
+            >
+              <span>{loading ? '処理中...' : '送信'}</span>
             </button>
           </form>
 

@@ -94,7 +94,7 @@ export default function Auth() {
       <div className="authForm">
         <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
         <div className="desc">
-          <p>Setlist Maker β Version 0.99.0000</p>
+          <p>Setlist Maker β Version 0.99.000</p>
         </div>
         <h2>{isLogin ? 'ログイン' : 'サインアップ'}</h2>
 
@@ -118,9 +118,13 @@ export default function Auth() {
           onChange={(e) => setPassword(e.target.value)}
           className="input"
         />
-        <button onClick={handleAuth} disabled={loading} className="submitButton">
-          <AiOutlineLogin />
-          {loading ? '処理中...' : isLogin ? 'ログイン' : 'サインアップ'}
+        <button 
+          onClick={handleAuth} 
+          disabled={loading} 
+          className={`submitButton ${loading ? 'loading' : ''}`}
+        >
+          {!loading && <AiOutlineLogin />}
+          <span>{loading ? '処理中...' : isLogin ? 'ログイン' : 'サインアップ'}</span>
         </button>
 
         <p className="signUpButton" onClick={() => {

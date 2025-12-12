@@ -42,6 +42,7 @@ const SetlistTool = () => {
   const { generatePDF } = usePDFGenerator();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isPDFLoading, setIsPDFLoading] = useState(false);
 
   // ドラッグ&ドロップ用のセンサー設定
   const sensors = useSensors(
@@ -88,6 +89,7 @@ const SetlistTool = () => {
 
   // PDFプレビューを開く
   const openPDFPreview = async () => {
+    setIsPDFLoading(true);
     try {
       const url = await generatePDF({
         name: bandName,
@@ -101,6 +103,8 @@ const SetlistTool = () => {
       setIsPDFModalOpen(true);
     } catch (error) {
       showToast('PDFの生成に失敗しました');
+    } finally {
+      setIsPDFLoading(false);
     }
   };
 
@@ -212,7 +216,7 @@ const SetlistTool = () => {
         </div>
 
         <div className="block">
-          <Submit onClick={openPDFPreview} text="Preview PDF" icon={<FaFilePdf />} />
+          <Submit onClick={openPDFPreview} text="Preview PDF" icon={<FaFilePdf />} loading={isPDFLoading} disabled={isPDFLoading} />
         </div>
       </div>
     </div>
