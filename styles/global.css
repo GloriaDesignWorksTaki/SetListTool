@@ -537,6 +537,75 @@ header .bandName {
   }
 }
 
+/* Privacy Policy Page */
+.privacy-policy-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.privacy-policy-update-date {
+  margin-top: 1rem;
+  color: #666;
+}
+
+.privacy-policy-section {
+  margin-top: 2rem;
+}
+
+.privacy-policy-section ul {
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.privacy-policy-back-link {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.privacy-policy-back-link a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+/* Privacy Policy Modal */
+.privacy-policy-modal-content {
+  text-align: left;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.privacy-policy-modal-update-date {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.privacy-policy-modal-section {
+  margin-bottom: 1.5rem;
+}
+
+.privacy-policy-modal-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.privacy-policy-modal-section p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.privacy-policy-modal-section ul {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-left: 1.5rem;
+}
+
+.privacy-policy-modal-section p + ul {
+  margin-top: 0.5rem;
+}
+
 /* PDF Preview Modal */
 .pdf-preview-modal-overlay {
   position: fixed;
