@@ -93,6 +93,9 @@ export default function Auth() {
     <div className="auth">
       <div className="authForm">
         <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
+        <div className="desc">
+          <p>Setlist Maker β Version 0.99.0000</p>
+        </div>
         <h2>{isLogin ? 'ログイン' : 'サインアップ'}</h2>
 
         {message && (
