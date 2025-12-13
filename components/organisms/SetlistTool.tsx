@@ -87,6 +87,19 @@ const SetlistTool = () => {
     }
   };
 
+  // PDFファイル名を生成
+  const generateFileName = () => {
+    const parts: string[] = [];
+    if (bandName) parts.push(bandName.replace(/\s+/g, ''));
+    if (date) parts.push(date.replace(/-/g, ''));
+    if (eventTitle) {
+      const sanitizedTitle = eventTitle.replace(/\s+/g, '').substring(0, 20);
+      if (sanitizedTitle) parts.push(sanitizedTitle);
+    }
+    const fileName = parts.length > 0 ? `${parts.join('_')}.pdf` : 'setlist.pdf';
+    return fileName;
+  };
+
   // PDFプレビューを開く
   const openPDFPreview = async () => {
     setIsPDFLoading(true);
@@ -125,6 +138,7 @@ const SetlistTool = () => {
         isOpen={isPDFModalOpen}
         onClose={closePDFModal}
         pdfUrl={pdfUrl}
+        fileName={generateFileName()}
       />
       <div className="container">
         <div className="block">
