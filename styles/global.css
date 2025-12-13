@@ -662,6 +662,26 @@ header .bandName {
   font-size: 18px;
   font-weight: bold;
 }
+.pdf-preview-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pdf-preview-modal-download {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: var(--black-color);
+}
+.pdf-preview-modal-download:hover {
+  background-color: #f3f4f6;
+}
 .pdf-preview-modal-close {
   background: none;
   border: none;

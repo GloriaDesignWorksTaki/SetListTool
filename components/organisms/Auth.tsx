@@ -132,7 +132,7 @@ export default function Auth() {
             router.push('/signup')
           } else {
             setIsLogin(true)
-            setMessage('')
+          setMessage('')
           }
         }}>
           {isLogin ? 'サインアップはこちら' : 'ログインはこちら'}
