@@ -15,10 +15,10 @@ export const EmailSentModal: React.FC<EmailSentModalProps> = ({ isOpen, onClose,
   const [resendSuccess, setResendSuccess] = useState(false)
   const [resendError, setResendError] = useState('')
 
-  // リダイレクトURLを取得（環境変数があればそれを使用、なければwindow.location.origin）
+  // リダイレクトURLを取得（実行時のwindow.location.originを使用）
   const getRedirectUrl = (): string => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
-    return `${siteUrl}/login?type=email`
+    if (typeof window === 'undefined') return '/login?type=email'
+    return `${window.location.origin}/login?type=email`
   }
 
   const handleResend = async () => {

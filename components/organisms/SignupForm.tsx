@@ -39,10 +39,10 @@ export default function SignupForm() {
     return true
   }
 
-  // リダイレクトURLを取得（環境変数があればそれを使用、なければwindow.location.origin）
+  // リダイレクトURLを取得
   const getRedirectUrl = (): string => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
-    return `${siteUrl}/login?type=email`
+    if (typeof window === 'undefined') return '/login?type=email'
+    return `${window.location.origin}/login?type=email`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -197,9 +197,9 @@ export default function SignupForm() {
               </label>
             </div>
 
-            <button 
-              type="submit" 
-              disabled={loading} 
+            <button
+              type="submit"
+              disabled={loading}
               className={`submitButton ${loading ? 'loading' : ''}`}
             >
               <span>{loading ? '処理中...' : '送信'}</span>
