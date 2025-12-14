@@ -112,13 +112,13 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
             >
               <FiDownload size={20} />
             </button>
-            <button
-              className="pdf-preview-modal-close"
-              onClick={onClose}
-              aria-label="Close"
-            >
-              <FiX size={24} />
-            </button>
+          <button
+            className="pdf-preview-modal-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <FiX size={24} />
+          </button>
           </div>
         </div>
 
