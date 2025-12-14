@@ -39,6 +39,12 @@ export default function SignupForm() {
     return true
   }
 
+  // リダイレクトURLを取得（環境変数があればそれを使用、なければwindow.location.origin）
+  const getRedirectUrl = (): string => {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+    return `${siteUrl}/login?type=email`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -59,7 +65,7 @@ export default function SignupForm() {
             band_name: bandName,
             genre: genre || null,
           },
-          emailRedirectTo: `${window.location.origin}/login?type=email`,
+          emailRedirectTo: getRedirectUrl(),
         },
       })
 
@@ -78,8 +84,6 @@ export default function SignupForm() {
         ) {
           const msg = 'すでに利用されているメールアドレスです'
           setError(msg)
-          // 必要であればブラウザのアラートも表示
-          // window.alert(msg)
           return
         }
 
