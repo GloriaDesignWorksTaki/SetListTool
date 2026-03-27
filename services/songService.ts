@@ -63,15 +63,15 @@ export const songService = {
 
   /**
    * 曲を削除
-   * @param title - 曲のタイトル
-   * @param bandId - バンドID
+   * @param id
+   * @param bandId
    */
-  async delete(title: string, bandId: string): Promise<void> {
+  async delete(id: string, bandId: string): Promise<void> {
     try {
       const { error } = await supabase
         .from('songs')
         .delete()
-        .eq('title', title)
+        .eq('id', id)
         .eq('band_id', bandId)
 
       if (error) {

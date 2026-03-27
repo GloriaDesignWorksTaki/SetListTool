@@ -2,6 +2,10 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabase } from "@/utils/supabaseClient";
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET is not set.");
+}
+
 export default NextAuth({
   providers: [
     CredentialsProvider({
@@ -102,9 +106,9 @@ export default NextAuth({
       }
     }
   },
-  // 開発環境でのデバッグ
-  debug: true,
+  // 開発環境のみデバッグログを有効化
+  debug: process.env.NODE_ENV === "development",
   // セッション更新の設定
   useSecureCookies: process.env.NODE_ENV === 'production',
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+  secret: process.env.NEXTAUTH_SECRET,
 });

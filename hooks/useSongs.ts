@@ -7,7 +7,7 @@ interface UseSongsReturn {
   songs: Song[]
   loading: boolean
   addSong: (title: string) => Promise<void>
-  deleteSong: (title: string) => Promise<void>
+  deleteSong: (id: string) => Promise<void>
   refreshSongs: () => Promise<void>
 }
 
@@ -58,14 +58,14 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
   }, [bandId])
 
   // データベースから曲を削除
-  const deleteSongFromDB = useCallback(async (title: string) => {
+  const deleteSongFromDB = useCallback(async (id: string) => {
     try {
       if (!bandId) {
         logger.error('バンドIDが見つかりません')
         return
       }
 
-      await songService.delete(title, bandId)
+      await songService.delete(id, bandId)
     } catch (error) {
       logger.error("曲の削除エラー:", error)
     }
@@ -83,9 +83,9 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
   }, [songs, bandId, addSongToDB, loadSongsFromDB])
 
   // 曲を削除
-  const deleteSong = useCallback(async (title: string) => {
-    setSongs((prevSongs) => prevSongs.filter((song) => song.title !== title))
-    await deleteSongFromDB(title)
+  const deleteSong = useCallback(async (id: string) => {
+    setSongs((prevSongs) => prevSongs.filter((song) => song.id !== id))
+    await deleteSongFromDB(id)
     await loadSongsFromDB() // データベースから最新のリストを再取得
   }, [deleteSongFromDB, loadSongsFromDB])
 

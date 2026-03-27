@@ -21,7 +21,52 @@ export default function SignupForm() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const router = useRouter()
 
-  const validateForm = (): boolean => {
+  type CheckEmailApiResponse = {
+    exists?: boolean
+    error?: string
+    errorCode?:
+      | 'method_not_allowed'
+      | 'email_required'
+      | 'missing_supabase_url'
+      | 'missing_service_role_key'
+      | 'supabase_admin_error'
+      | 'unexpected_error'
+  }
+
+  const getEmailCheckErrorMessage = (errorCode?: CheckEmailApiResponse['errorCode']): string => {
+    if (errorCode === 'missing_service_role_key') {
+      return 'メール重複チェックの設定が不足しています（SUPABASE_SERVICE_ROLE_KEY）'
+    }
+    if (errorCode === 'missing_supabase_url') {
+      return 'メール重複チェックの設定が不足しています（NEXT_PUBLIC_SUPABASE_URL）'
+    }
+    if (errorCode === 'supabase_admin_error') {
+      return 'メール重複チェックに失敗したため、そのままサインアップ処理を続行します'
+    }
+    return 'メール重複チェックに失敗したため、そのままサインアップ処理を続行します'
+  }
+
+  const checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; fallbackMessage?: string }> => {
+    const response = await fetch('/api/auth/check-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: emailToCheck }),
+    })
+    
+    const data: CheckEmailApiResponse = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      return {
+        exists: false,
+        fallbackMessage: getEmailCheckErrorMessage(data.errorCode),
+      }
+    }
+
+    return { exists: Boolean(data.exists) }
+  }
+
+  const validateForm = async (): Promise<boolean> => {
     const formData: SignupFormData = {
       bandName,
       genre,
@@ -36,6 +81,17 @@ export default function SignupForm() {
       setError(result.error)
       return false
     }
+
+    const emailCheck = await checkEmailExists(email)
+    if (emailCheck.exists) {
+        setError('すでに利用されているメールアドレスです')
+        return false
+    }
+    
+    if (emailCheck.fallbackMessage) {
+      setError(emailCheck.fallbackMessage)
+    }
+
     return true
   }
 
@@ -48,12 +104,12 @@ export default function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
-    if (!validateForm()) {
+    if (!(await validateForm())) {
+      setLoading(false)
       return
     }
-
-    setLoading(true)
 
     try {
       // Supabaseでユーザー登録（user_metadataにバンド情報を保存）
