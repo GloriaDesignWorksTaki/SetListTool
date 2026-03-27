@@ -1,20 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabaseClient'
 import { useRouter } from 'next/router'
-import { signIn, signOut, useSession } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { AiOutlineLogin } from 'react-icons/ai'
 
-export default function Auth() {
+interface AuthProps {
+  disableAutoRedirect?: boolean
+}
+
+export default function Auth({ disableAutoRedirect = false }: AuthProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
   const [message, setMessage] = useState('')
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+
+  useEffect(() => {
+    if (!disableAutoRedirect && status === 'authenticated') {
+      router.replace('/')
+    }
+  }, [disableAutoRedirect, status, router])
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -70,23 +80,8 @@ export default function Auth() {
     }
   }
 
-  const handleSignOut = async () => {
-    await signOut({ redirect: false })
-    router.push('/login')
-  }
-
-  if (session) {
-    return (
-      <div className="auth">
-        <div className="authForm">
-          <h2>ログイン済み</h2>
-          <p>ようこそ、{session.user?.email}さん</p>
-          <button onClick={handleSignOut} className="submitButton">
-            ログアウト
-          </button>
-        </div>
-      </div>
-    )
+  if (status === 'loading' || session) {
+    return null
   }
 
   return (

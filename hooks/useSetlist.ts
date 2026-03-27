@@ -32,16 +32,22 @@ export const useSetlist = (): UseSetlistReturn => {
 
   // セッションからSetlistを復元
   const restoreSetlistFromSession = useCallback(() => {
-    if (session?.user?.id) {
-      const savedSetlist = sessionStorage.getItem(`setlist_${session.user.id}`)
-      if (savedSetlist) {
-        try {
-          const parsedSetlist = JSON.parse(savedSetlist)
-          setSetlist(parsedSetlist)
-        } catch (error) {
-          logger.error('Setlist復元エラー:', error)
-        }
+    if (!session?.user?.id) {
+      setSetlist([])
+      return
+    }
+
+    const savedSetlist = sessionStorage.getItem(`setlist_${session.user.id}`)
+    if (savedSetlist) {
+      try {
+        const parsedSetlist = JSON.parse(savedSetlist)
+        setSetlist(parsedSetlist)
+      } catch (error) {
+        logger.error('Setlist復元エラー:', error)
+        setSetlist([])
       }
+    } else {
+      setSetlist([])
     }
   }, [session?.user?.id])
 

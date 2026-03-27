@@ -1,4 +1,3 @@
-import Auth from '@/components/organisms/Auth'
 import Head from 'next/head'
 import { LoginWithWelcome } from '@/components/organisms/LoginWithWelcome'
 
