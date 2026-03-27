@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Auth from './Auth'
 
 export function LoginWithWelcome() {
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string; allowResend?: boolean } | null>(null)
 
   useEffect(() => {
     // 認証リンク経由の遷移を検知して、ログイン画面に結果を表示
@@ -53,6 +53,7 @@ export function LoginWithWelcome() {
           text: isExpired
             ? '認証リンクの有効期限が切れています。確認メールを再送してください。'
             : 'メール認証に失敗しました。もう一度お試しください。',
+          allowResend: true,
         })
       } else {
         setNotice({

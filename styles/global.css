@@ -229,6 +229,22 @@ section .wrapper {
   margin-right: 0.5rem;
 }
 
+.linkButton {
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.linkButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Song Card */
 .cardList {
   margin-top: 1rem;
