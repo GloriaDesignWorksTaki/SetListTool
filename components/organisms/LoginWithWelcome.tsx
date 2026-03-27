@@ -10,24 +10,46 @@ import Auth from './Auth'
 export function LoginWithWelcome() {
   const router = useRouter()
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [isEmailConfirmationFlow, setIsEmailConfirmationFlow] = useState(false)
 
   useEffect(() => {
-    // ハッシュフラグメントからメール認証確認を処理
+    // メール認証リンク経由のログインを検知してWelcomeを表示
     const handleEmailConfirmation = async () => {
       if (typeof window === 'undefined') return
 
-      // ハッシュフラグメントをチェック
-      const hash = window.location.hash
-      if (!hash || hash.length === 0) return
+      const currentUrl = new URL(window.location.href)
+      const queryType = currentUrl.searchParams.get('type')
+      const queryAccessToken = currentUrl.searchParams.get('access_token')
+      const queryRefreshToken = currentUrl.searchParams.get('refresh_token')
+      const queryCode = currentUrl.searchParams.get('code')
+      const queryTokenHash = currentUrl.searchParams.get('token_hash')
 
       // ハッシュフラグメントからパラメータを取得
+      const hash = window.location.hash
       const hashParams = new URLSearchParams(hash.substring(1))
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
-      const type = hashParams.get('type')
+      const hashAccessToken = hashParams.get('access_token')
+      const hashRefreshToken = hashParams.get('refresh_token')
+      const hashType = hashParams.get('type')
+      const hashCode = hashParams.get('code')
+      const hashTokenHash = hashParams.get('token_hash')
+
+      const type = hashType || queryType
+      const accessToken = hashAccessToken || queryAccessToken
+      const refreshToken = hashRefreshToken || queryRefreshToken
+
+      // Supabaseの認証コールバックらしきURLかどうかを幅広く判定
+      const isAuthCallback =
+        type === 'email' ||
+        type === 'signup' ||
+        Boolean(accessToken) ||
+        Boolean(queryCode || hashCode) ||
+        Boolean(queryTokenHash || hashTokenHash)
+
+      if (!isAuthCallback) return
+      setIsEmailConfirmationFlow(true)
 
       // メール認証確認の場合
-      if (type === 'email' && accessToken) {
+      if (accessToken) {
         try {
           // セッションを設定
           const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
@@ -55,14 +77,33 @@ export function LoginWithWelcome() {
 
             // Welcomeポップアップを表示
             setShowWelcomeModal(true)
-
-            // ハッシュをクリア
-            window.history.replaceState(null, '', '/login')
           }
         } catch (error) {
           console.error('メール認証処理エラー:', error)
         }
+      } else {
+        // PKCEやtoken_hash形式などではSDK側でセッションが復元済みの可能性がある
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (session?.user) {
+          const bandId = await bandService.getBandId(session.user.id)
+          if (!bandId) {
+            const bandName = session.user.user_metadata?.band_name || 'My Band'
+            const genre = session.user.user_metadata?.genre || null
+            try {
+              await bandService.create(session.user.id, bandName, undefined, genre)
+            } catch (error) {
+              console.error('バンド作成エラー:', error)
+            }
+          }
+          setShowWelcomeModal(true)
+        }
       }
+
+      // クエリとハッシュをクリア
+      window.history.replaceState(null, '', '/login')
     }
 
     handleEmailConfirmation()
@@ -70,10 +111,14 @@ export function LoginWithWelcome() {
 
   return (
     <>
-      <Auth />
+      <Auth disableAutoRedirect={isEmailConfirmationFlow || showWelcomeModal} />
       <WelcomeModal
         isOpen={showWelcomeModal}
-        onClose={() => setShowWelcomeModal(false)}
+        onClose={() => {
+          setShowWelcomeModal(false)
+          setIsEmailConfirmationFlow(false)
+          router.replace('/')
+        }}
       />
     </>
   )

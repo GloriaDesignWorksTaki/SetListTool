@@ -25,20 +25,15 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [bandName, setBandName] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const { data: session } = useSession()
-
-  // ローカルストレージからバンド名を取得
-  useEffect(() => {
-    const savedBandName = localStorage.getItem('bandName')
-    if (savedBandName) {
-      setBandName(savedBandName)
-    }
-    setLoading(false)
-  }, [])
+  const storageKey = session?.user?.id ? `bandName_${session.user.id}` : null
 
   useEffect(() => {
     const fetchBandName = async () => {
       try {
+        setLoading(true)
+
         if (!session?.user?.id) {
+          setBandName('')
           setLoading(false)
           return
         }
@@ -47,26 +42,30 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (bandNameResult) {
           setBandName(bandNameResult)
-          localStorage.setItem('bandName', bandNameResult)
+          if (storageKey) {
+            localStorage.setItem(storageKey, bandNameResult)
+          }
         } else {
-          const savedBandName = localStorage.getItem('bandName') || 'No Band Name'
-          setBandName(savedBandName)
+          const savedBandName = storageKey ? localStorage.getItem(storageKey) : null
+          setBandName(savedBandName || '')
         }
       } catch (error) {
         logger.error('エラーが発生しました:', error)
-        const savedBandName = localStorage.getItem('bandName') || 'No Band Name'
-        setBandName(savedBandName)
+        const savedBandName = storageKey ? localStorage.getItem(storageKey) : null
+        setBandName(savedBandName || '')
       } finally {
         setLoading(false)
       }
     }
 
     fetchBandName()
-  }, [session])
+  }, [session, storageKey])
 
   const updateBandName = (name: string) => {
     setBandName(name)
-    localStorage.setItem('bandName', name)
+    if (storageKey) {
+      localStorage.setItem(storageKey, name)
+    }
   }
 
   return (
