@@ -9,9 +9,13 @@ import { AiOutlineLogin } from 'react-icons/ai'
 
 interface AuthProps {
   disableAutoRedirect?: boolean
+  notice?: {
+    type: 'success' | 'error'
+    text: string
+  } | null
 }
 
-export default function Auth({ disableAutoRedirect = false }: AuthProps) {
+export default function Auth({ disableAutoRedirect = false, notice = null }: AuthProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -92,6 +96,12 @@ export default function Auth({ disableAutoRedirect = false }: AuthProps) {
           <p>Setlist Maker β Version 0.99.000</p>
         </div>
         <h2>{isLogin ? 'ログイン' : 'サインアップ'}</h2>
+
+        {notice && (
+          <div className={`authNotice ${notice.type === 'success' ? 'authNoticeSuccess' : 'authNoticeError'}`}>
+            {notice.text}
+          </div>
+        )}
 
         {message && (
           <div className="errorMessage">

@@ -159,6 +159,26 @@ section .wrapper {
   word-break: break-word;
 }
 
+.authNotice {
+  padding: .5rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  word-break: break-word;
+}
+
+.authNoticeSuccess {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.authNoticeError {
+  background-color: var(--error-bg);
+  color: var(--error-text);
+  border-color: var(--error-border);
+}
+
 /* Form Parts */
 .input {
   width: 100%;
