@@ -159,6 +159,26 @@ section .wrapper {
   word-break: break-word;
 }
 
+.authNotice {
+  padding: .5rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  word-break: break-word;
+}
+
+.authNoticeSuccess {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.authNoticeError {
+  background-color: var(--error-bg);
+  color: var(--error-text);
+  border-color: var(--error-border);
+}
+
 /* Form Parts */
 .input {
   width: 100%;
@@ -207,6 +227,22 @@ section .wrapper {
   border-radius: 50%;
   animation: spinnerRotate 0.8s linear infinite;
   margin-right: 0.5rem;
+}
+
+.linkButton {
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.linkButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Song Card */

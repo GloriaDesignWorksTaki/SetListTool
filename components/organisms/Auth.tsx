@@ -9,14 +9,22 @@ import { AiOutlineLogin } from 'react-icons/ai'
 
 interface AuthProps {
   disableAutoRedirect?: boolean
+  notice?: {
+    type: 'success' | 'error'
+    text: string
+    allowResend?: boolean
+  } | null
 }
 
-export default function Auth({ disableAutoRedirect = false }: AuthProps) {
+export default function Auth({ disableAutoRedirect = false, notice = null }: AuthProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isLogin, setIsLogin] = useState(true)
   const [message, setMessage] = useState('')
+  const [allowResend, setAllowResend] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
+  const [resendMessageType, setResendMessageType] = useState<'success' | 'error'>('success')
+  const [resending, setResending] = useState(false)
   const router = useRouter()
   const { data: session, status } = useSession()
 
@@ -26,6 +34,52 @@ export default function Auth({ disableAutoRedirect = false }: AuthProps) {
     }
   }, [disableAutoRedirect, status, router])
 
+  useEffect(() => {
+    setAllowResend(Boolean(notice?.allowResend))
+  }, [notice])
+
+  const getRedirectUrl = (): string => {
+    if (typeof window === 'undefined') return '/login?type=email'
+    return `${window.location.origin}/login?type=email`
+  }
+
+  const handleResendConfirmationEmail = async () => {
+    setResendMessage('')
+    setResendMessageType('success')
+    const targetEmail = email.trim()
+
+    if (!targetEmail) {
+      setResendMessage('再送するメールアドレスを入力してください。')
+      setResendMessageType('error')
+      return
+    }
+
+    setResending(true)
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: targetEmail,
+        options: {
+          emailRedirectTo: getRedirectUrl(),
+        },
+      })
+
+      if (error) {
+        setResendMessage(`確認メールの再送に失敗しました: ${error.message}`)
+        setResendMessageType('error')
+      } else {
+        setResendMessage('確認メールを再送しました。メールをご確認ください。')
+        setResendMessageType('success')
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '不明なエラー'
+      setResendMessage(`確認メールの再送に失敗しました: ${message}`)
+      setResendMessageType('error')
+    } finally {
+      setResending(false)
+    }
+  }
+
   const handleAuth = async () => {
     if (!email || !password) {
       setMessage('メールアドレスとパスワードを入力してください')
@@ -34,44 +88,29 @@ export default function Auth({ disableAutoRedirect = false }: AuthProps) {
 
     setLoading(true)
     setMessage('')
+    setResendMessage('')
+    setResendMessageType('success')
+    setAllowResend(false)
 
     try {
-      if (isLogin) {
-        // NextAuthを使用してログイン
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        })
+      // NextAuthを使用してログイン
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
 
-        if (result?.error) {
-          if (result.error.includes('Email not confirmed')) {
-            setMessage('メール確認が必要です。メールを確認してください。')
-          } else if (result.error.includes('Invalid login credentials')) {
-            setMessage('メールアドレスまたはパスワードが正しくありません')
-          } else {
-            setMessage(`ログインエラー: ${result.error}`)
-          }
-        } else if (result?.ok) {
-          router.push('/')
+      if (result?.error) {
+        if (result.error.includes('Email not confirmed')) {
+          setMessage('メール確認が必要です。メールを確認してください。')
+          setAllowResend(true)
+        } else if (result.error.includes('Invalid login credentials')) {
+          setMessage('メールアドレスまたはパスワードが正しくありません')
+        } else {
+          setMessage(`ログインエラー: ${result.error}`)
         }
-      } else {
-        // Supabaseを使用してサインアップ（NextAuthはサインアップをサポートしていないため）
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password
-        })
-
-        if (error) {
-          if (error.message.includes('User already registered')) {
-            setMessage('このメールアドレスは既に登録されています')
-          } else {
-            setMessage(`サインアップエラー: ${error.message}`)
-          }
-        } else if (data.user) {
-          setMessage('サインアップが完了しました。メールを確認してください。')
-          setIsLogin(true)
-        }
+      } else if (result?.ok) {
+        router.push('/')
       }
     } catch (error: any) {
       setMessage(`エラーが発生しました: ${error.message}`)
@@ -91,11 +130,32 @@ export default function Auth({ disableAutoRedirect = false }: AuthProps) {
         <div className="desc">
           <p>Setlist Maker β Version 0.99.000</p>
         </div>
-        <h2>{isLogin ? 'ログイン' : 'サインアップ'}</h2>
+        <h2>ログイン</h2>
+
+        {notice && (
+          <div className={`authNotice ${notice.type === 'success' ? 'authNoticeSuccess' : 'authNoticeError'}`}>
+            {notice.text}
+          </div>
+        )}
 
         {message && (
           <div className="errorMessage">
             {message}
+          </div>
+        )}
+        {allowResend && (
+          <button
+            type="button"
+            className="linkButton"
+            onClick={handleResendConfirmationEmail}
+            disabled={resending}
+          >
+            {resending ? '再送中...' : '確認メールを再送する'}
+          </button>
+        )}
+        {resendMessage && (
+          <div className={`authNotice ${resendMessageType === 'success' ? 'authNoticeSuccess' : 'authNoticeError'}`}>
+            {resendMessage}
           </div>
         )}
 
@@ -119,18 +179,13 @@ export default function Auth({ disableAutoRedirect = false }: AuthProps) {
           className={`submitButton ${loading ? 'loading' : ''}`}
         >
           {!loading && <AiOutlineLogin />}
-          <span>{loading ? '処理中...' : isLogin ? 'ログイン' : 'サインアップ'}</span>
+          <span>{loading ? '処理中...' : 'ログイン'}</span>
         </button>
 
         <p className="signUpButton" onClick={() => {
-          if (isLogin) {
-            router.push('/signup')
-          } else {
-            setIsLogin(true)
-          setMessage('')
-          }
+          router.push('/signup')
         }}>
-          {isLogin ? 'サインアップはこちら' : 'ログインはこちら'}
+          サインアップはこちら
         </p>
       </div>
     </div>
