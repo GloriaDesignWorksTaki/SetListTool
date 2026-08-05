@@ -62,6 +62,35 @@ export const songService = {
   },
 
   /**
+   * 曲のタイトルを更新
+   */
+  async update(id: string, bandId: string, title: string): Promise<Song> {
+    try {
+      const { data, error } = await supabase
+        .from('songs')
+        .update({ title })
+        .eq('id', id)
+        .eq('band_id', bandId)
+        .select('id, title, band_id')
+        .single()
+
+      if (error) {
+        logger.error('曲の更新エラー:', error)
+        throw new Error(`曲の更新に失敗しました: ${error.message}`)
+      }
+
+      if (!data) {
+        throw new Error('曲の更新に失敗しました: データが返されませんでした')
+      }
+
+      return data
+    } catch (error) {
+      logger.error('曲の更新エラー:', error)
+      throw error
+    }
+  },
+
+  /**
    * 曲を削除
    * @param id
    * @param bandId

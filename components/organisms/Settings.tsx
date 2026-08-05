@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
 import { LogoUpload } from '@/components/atoms/LogoUpload'
@@ -11,52 +11,41 @@ import { Toast } from '@/components/atoms/Toast'
 import { useToast } from '@/hooks/useToast'
 import { bandService } from '@/services/bandService'
 import { logger } from '@/utils/logger'
-import { FiSave } from 'react-icons/fi'
+import { FiSave, FiTrash2 } from 'react-icons/fi'
 
 export default function Settings() {
   const [bandName, setBandName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
-  const [logoIsLight, setLogoIsLight] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
   const router = useRouter()
   const { data: session, status } = useSession()
-  const { setBandName: setGlobalBandName } = useBand()
+  const {
+    bandId,
+    bandName: contextBandName,
+    logoUrl: contextLogoUrl,
+    loading: bandLoading,
+    setBandName: setGlobalBandName,
+    setLogoUrl: setGlobalLogoUrl,
+    setBandId,
+    refetch,
+  } = useBand()
   const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast()
 
   useEffect(() => {
-    const fetchBand = async () => {
-      if (status === 'loading') {
-        return
-      }
-      
-      if (!session?.user?.id) {
-        router.push('/login')
-        return
-      }
-
-      try {
-        const band = await bandService.getBandByUserId(session.user.id)
-
-        if (band) {
-          setBandName(band.name || '')
-          const logoUrlValue = band.logo_url && band.logo_url.trim() !== '' ? band.logo_url : ''
-          setLogoUrl(logoUrlValue)
-          setLogoIsLight(false)
-        } else {
-          setBandName('')
-          setLogoUrl('')
-          setLogoIsLight(false)
-        }
-      } catch (error: any) {
-        logger.error('エラーが発生しました:', error)
-        // エラー時も初期化
-        setBandName('')
-        setLogoUrl('')
-        setLogoIsLight(false)
-      }
+    if (status === 'loading' || bandLoading) {
+      return
     }
-    fetchBand()
-  }, [session, status, router])
+
+    if (!session?.user?.id) {
+      router.push('/login')
+      return
+    }
+
+    setBandName(contextBandName || '')
+    setLogoUrl(contextLogoUrl || '')
+  }, [session, status, router, bandLoading, contextBandName, contextLogoUrl])
 
   const handleUpdateBandNameWithLogo = async (logoUrlToSave: string) => {
     try {
@@ -68,47 +57,33 @@ export default function Settings() {
         return
       }
 
-      const existingBandId = await bandService.getBandId(session.user.id)
-
       const logoUrlForSave = logoUrlToSave && logoUrlToSave.trim() !== '' ? logoUrlToSave : null
+      let currentBandId = bandId
 
-      if (existingBandId) {
-        try {
-          await bandService.update(existingBandId, {
-            name: bandName,
-            logo_url: logoUrlForSave || undefined,
-          })
-          await new Promise(resolve => setTimeout(resolve, 200))
-
-          const updatedBand = await bandService.getBandByUserId(session.user.id)
-          if (updatedBand) {
-            const updatedLogoUrl = updatedBand.logo_url && updatedBand.logo_url.trim() !== '' ? updatedBand.logo_url : ''
-            setLogoUrl(updatedLogoUrl)
-          }
-          showToast('設定を更新しました')
-          setGlobalBandName(bandName || 'No Band Name')
-        } catch (error) {
-          logger.error('バンド名の更新に失敗しました:', error)
-          showToast('バンド名の更新に失敗しました')
-        }
+      if (currentBandId) {
+        await bandService.update(currentBandId, {
+          name: bandName,
+          logo_url: logoUrlForSave || undefined,
+        })
       } else {
-        try {
-          await bandService.create(session.user.id, bandName, logoUrlForSave || undefined)
-          await new Promise(resolve => setTimeout(resolve, 200))
-          const createdBand = await bandService.getBandByUserId(session.user.id)
-          if (createdBand) {
-            const createdLogoUrl = createdBand.logo_url && createdBand.logo_url.trim() !== '' ? createdBand.logo_url : ''
-            setLogoUrl(createdLogoUrl)
-          }
-          showToast('バンド名を保存しました')
-        } catch (error) {
-          logger.error('バンド名の保存に失敗しました:', error)
-          showToast('バンド名の保存に失敗しました')
-        }
+        const created = await bandService.create(
+          session.user.id,
+          bandName,
+          logoUrlForSave || undefined
+        )
+        currentBandId = created.id
+        setBandId(created.id)
       }
-    } catch (error: any) {
-      logger.error('エラーが発生しました:', error)
-      showToast('エラーが発生しました')
+
+      const nextLogo = logoUrlForSave || ''
+      setLogoUrl(nextLogo)
+      setGlobalLogoUrl(nextLogo)
+      setGlobalBandName(bandName || 'No Band Name')
+      showToast(currentBandId && bandId ? '設定を更新しました' : 'バンド名を保存しました')
+      await refetch()
+    } catch (error) {
+      logger.error('設定の保存に失敗しました:', error)
+      showToast('設定の保存に失敗しました')
     } finally {
       setLoading(false)
     }
@@ -116,6 +91,68 @@ export default function Settings() {
 
   const handleUpdateBandName = async () => {
     await handleUpdateBandNameWithLogo(logoUrl)
+  }
+
+  const clearLocalCaches = () => {
+    if (typeof window === 'undefined') return
+    try {
+      const keys: string[] = []
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i)
+        if (key) keys.push(key)
+      }
+      keys.forEach((key) => {
+        if (key.startsWith('setlist_') || key.startsWith('setlist_v2_') || key.startsWith('bandName_')) {
+          sessionStorage.removeItem(key)
+        }
+      })
+      const localKeys: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key) localKeys.push(key)
+      }
+      localKeys.forEach((key) => {
+        if (key.startsWith('bandName_')) {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') {
+      showToast('Type DELETE to confirm')
+      return
+    }
+
+    const ok = window.confirm(
+      'Are you sure you want to delete your account? Your band, songs, and setlists cannot be restored.'
+    )
+    if (!ok) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      })
+      const data = (await response.json()) as { ok?: boolean; error?: string }
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to delete account')
+      }
+
+      clearLocalCaches()
+      await signOut({ redirect: false })
+      router.push('/login')
+    } catch (error) {
+      logger.error('Account deletion error:', error)
+      showToast(error instanceof Error ? error.message : 'Failed to delete account')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -142,21 +179,48 @@ export default function Settings() {
               onChange={(e) => setBandName(e.target.value)}
               className="input"
               placeholder="Enter Band Name"
+              disabled={loading || deleting}
             />
           </div>
           <div className="block">
             <LogoUpload
               onLogoUpload={(url) => {
                 setLogoUrl(url)
-                setTimeout(() => {
-                  handleUpdateBandNameWithLogo(url)
-                }, 100)
+                void handleUpdateBandNameWithLogo(url)
               }}
               currentLogo={logoUrl && logoUrl.trim() !== '' ? logoUrl : undefined}
             />
           </div>
           <div className="block">
-            <Button className="submitButton" onClick={handleUpdateBandName} text="Update" icon={<FiSave />} />
+            <Button
+              className="submitButton"
+              onClick={handleUpdateBandName}
+              text={loading ? 'Saving...' : 'Update'}
+              icon={<FiSave />}
+              disabled={loading || deleting}
+            />
+          </div>
+
+          <div className="block dangerZone">
+            <h2>Delete Account</h2>
+            <p className="desc">
+              Deleting your account will also remove your band, songs, and setlists. This cannot be undone.
+            </p>
+            <input
+              type="text"
+              className="input"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder='Type DELETE to confirm'
+              disabled={deleting}
+            />
+            <Button
+              className="submitButton secondary"
+              onClick={() => void handleDeleteAccount()}
+              text={deleting ? 'Deleting...' : 'Delete Account'}
+              icon={<FiTrash2 />}
+              disabled={deleting || deleteConfirm !== 'DELETE'}
+            />
           </div>
         </div>
       </section>

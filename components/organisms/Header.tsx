@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { useRouter } from 'next/router'
-import { signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import { useBand } from '@/contexts/BandContext'
 import Image from 'next/image'
 
 const Header: React.FC = () => {
   const router = useRouter()
+  const { data: session } = useSession()
   const { bandName, loading } = useBand()
 
   const handleLogout = async () => {
@@ -24,6 +25,9 @@ const Header: React.FC = () => {
           <ul>
             <li><Link href="/">Home</Link></li>
             <li><Link href="/settings">Settings</Link></li>
+            {session?.isAdmin && (
+              <li><Link href="/admin">Admin</Link></li>
+            )}
             <li>
               <Link href="/login" onClick={handleLogout}>Logout</Link>
             </li>

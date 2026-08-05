@@ -1,46 +1,27 @@
 import { AppProps } from "next/app";
 import "@/styles/reset.css"
 import "@/styles/global.css"
-import { SessionProvider, useSession } from "next-auth/react";
+import { SessionProvider } from "next-auth/react";
 import Header from "@/components/organisms/Header";
 import Footer from "@/components/organisms/Footer";
 import { useRouter } from "next/router";
 import { BandProvider } from "@/contexts/BandContext";
-import { useEffect } from "react";
-import { setSupabaseAuth } from "@/utils/supabaseClient";
-
-// Supabase認証を設定するコンポーネント
-const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: session, status } = useSession();
-
-  useEffect(() => {
-    if (status === 'loading') {
-      return;
-    }
-    if (session && session.accessToken) {
-      setSupabaseAuth(session).catch((error) => {
-        console.error('Supabase認証設定エラー:', error);
-      });
-    } else {
-      // セッションがない場合もSupabaseセッションをクリア
-      setSupabaseAuth(null).catch((error) => {
-        console.error('Supabaseセッションクリアエラー:', error);
-      });
-    }
-  }, [session, status]);
-
-  return <>{children}</>;
-};
+import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 
 const App = ({ Component, pageProps }: AppProps) => {
   const router = useRouter();
-  const isAuthPage = router.pathname === '/login' || router.pathname === '/signup';
+  const isAuthPage =
+    router.pathname === '/login' ||
+    router.pathname === '/signup' ||
+    router.pathname === '/forgot-password' ||
+    router.pathname === '/reset-password';
 
   return (
     <SessionProvider
       session={pageProps.session}
-      refetchInterval={5 * 60} // 5分ごとにセッションを更新
-      refetchOnWindowFocus={true} // ウィンドウがフォーカスされたときにセッションを更新
+      // Supabase access token の典型的な寿命（1h）より少し短く。jwt コールバックで refresh
+      refetchInterval={45 * 60}
+      refetchOnWindowFocus={false}
     >
       <SupabaseAuthProvider>
         <BandProvider>

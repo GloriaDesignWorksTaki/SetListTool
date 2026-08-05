@@ -101,19 +101,29 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
       })
 
       if (result?.error) {
-        if (result.error.includes('Email not confirmed')) {
+        const err = result.error
+        if (
+          err.includes('Email not confirmed') ||
+          err.toLowerCase().includes('email not confirmed')
+        ) {
           setMessage('メール確認が必要です。メールを確認してください。')
           setAllowResend(true)
-        } else if (result.error.includes('Invalid login credentials')) {
+        } else if (
+          err.includes('Invalid login credentials') ||
+          err.toLowerCase().includes('invalid login credentials')
+        ) {
+          setMessage('メールアドレスまたはパスワードが正しくありません')
+        } else if (err === 'CredentialsSignin') {
           setMessage('メールアドレスまたはパスワードが正しくありません')
         } else {
-          setMessage(`ログインエラー: ${result.error}`)
+          setMessage(`ログインエラー: ${err}`)
         }
       } else if (result?.ok) {
         router.push('/')
       }
-    } catch (error: any) {
-      setMessage(`エラーが発生しました: ${error.message}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '不明なエラー'
+      setMessage(`エラーが発生しました: ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -182,6 +192,9 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
           <span>{loading ? '処理中...' : 'ログイン'}</span>
         </button>
 
+        <p className="signUpButton" onClick={() => router.push('/forgot-password')}>
+          パスワードをお忘れですか？
+        </p>
         <p className="signUpButton" onClick={() => {
           router.push('/signup')
         }}>

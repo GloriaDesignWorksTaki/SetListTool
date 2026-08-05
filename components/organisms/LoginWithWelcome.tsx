@@ -34,6 +34,23 @@ export function LoginWithWelcome() {
       const error = hashError || queryError
       const errorDescription = hashErrorDescription || queryErrorDescription
 
+      // パスワード再設定は専用ページへ
+      if (type === 'recovery') {
+        const target = new URL('/reset-password', window.location.origin)
+        if (window.location.hash) {
+          target.hash = window.location.hash.replace(/^#/, '')
+        }
+        if (window.location.search) {
+          // query パラメータを引き継ぐ
+          const params = new URLSearchParams(window.location.search)
+          params.forEach((value, key) => {
+            target.searchParams.set(key, value)
+          })
+        }
+        window.location.replace(target.toString())
+        return
+      }
+
       // 認証コールバックらしきURLかどうかを判定
       const isAuthCallback =
         type === 'email' ||
