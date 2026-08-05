@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useSession } from 'next-auth/react'
 import { bandService } from '@/services/bandService'
 import { logger } from '@/utils/logger'
+import { useSupabaseAuthReady } from '@/contexts/SupabaseAuthContext'
 
 interface BandContextType {
   bandId: string | null
@@ -36,6 +37,7 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const { data: session, status } = useSession()
+  const { ready: supabaseReady } = useSupabaseAuthReady()
   const userId = session?.user?.id ?? null
   const storageKey = userId ? `bandName_${userId}` : null
 
@@ -86,11 +88,15 @@ export const BandProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [userId, applyBand, storageKey])
 
   useEffect(() => {
-    if (status === 'loading') {
+    if (status === 'loading' || !supabaseReady) {
+      // Supabase setSession 完了前は RLS 付きクエリを走らせない
+      if (status === 'loading' || (status === 'authenticated' && !supabaseReady)) {
+        setLoading(true)
+      }
       return
     }
     void refetch()
-  }, [status, refetch])
+  }, [status, supabaseReady, refetch])
 
   const updateBandName = useCallback(
     (name: string) => {

@@ -27,6 +27,23 @@ html, body {
   overscroll-behavior-y: none !important;
   /* ドラッグ時の画面移動防止 */
   touch-action: manipulation;
+  line-height: 1.6;
+  color: var(--black-color);
+}
+
+p,
+li,
+.desc,
+.errorMessage,
+.authNotice,
+.modal-body,
+.adminTable {
+  line-height: 1.65;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h2Title {
+  line-height: 1.4;
 }
 
 /* Mobile Zoom Prevent */
@@ -95,6 +112,7 @@ html.dragging {
 /* text */
 .desc {
   margin-bottom: 1rem;
+  line-height: 1.65;
 }
 
 /* section */
@@ -259,8 +277,21 @@ section .wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  line-height: normal;
+  gap: 0.5rem;
+  line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
+}
+.songCardMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.songCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 .mcCard {
   background-color: var(--secondary-pale);
@@ -271,11 +302,13 @@ section .wrapper {
 .mcCard .mcCardTitle {
   flex-grow: 1;
   margin: 0 .25rem;
+  word-break: break-word;
 }
 .songCard + .songCard {
   margin-top: .5rem;
 }
 .songCardDelete,
+.songCardEdit,
 .RemoveFromSetlistButton,
 .AddToSetlistButton {
   display: flex;
@@ -289,15 +322,34 @@ section .wrapper {
   border-radius: 5px;
   transition: background-color 0.3s ease;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 .songCardDelete:hover,
+.songCardEdit:hover,
 .RemoveFromSetlistButton:hover,
 .AddToSetlistButton:hover {
   background-color: var(--primary-dark);
 }
-.RemoveFromSetlistButton,
-.AddToSetlistButton {
-  margin-left: .5rem;
+.songCardEdit {
+  background-color: var(--primary-light);
+}
+.songCardEditInput {
+  flex-grow: 1;
+  margin: 0 .25rem;
+  padding: .5rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  min-width: 0;
+}
+.dangerZone {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--secondary-light);
+}
+.dangerZone h2 {
+  color: var(--secondary-dark);
+  margin-bottom: 1rem;
 }
 .mcCard .RemoveFromSetlistButton {
   background-color: var(--secondary-color);
@@ -759,6 +811,84 @@ footer .copy {
   text-align: center;
 }
 
+/* Admin */
+.adminPage {
+  max-width: 1100px;
+}
+.adminTitle {
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.adminStats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--gray-color);
+  border-bottom: 1px solid var(--gray-color);
+}
+.adminStatItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 100px;
+}
+.adminStatLabel {
+  font-size: 0.8rem;
+  color: #666;
+}
+.adminStatValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-dark);
+}
+.adminTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.5rem 0 1rem;
+}
+.adminTab {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #666;
+  border-bottom: 2px solid transparent;
+}
+.adminTab.active {
+  color: var(--primary-dark);
+  font-weight: bold;
+  border-bottom-color: var(--primary-color);
+}
+.adminTableWrap {
+  overflow-x: auto;
+}
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.adminTable th,
+.adminTable td {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--gray-color);
+  vertical-align: top;
+}
+.adminTable th {
+  font-weight: bold;
+  color: var(--primary-dark);
+  white-space: nowrap;
+}
+.adminMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
 /* SmartPhone Responsive */
 @media (max-width: 768px) {
   .setlistContent {
@@ -773,6 +903,27 @@ footer .copy {
   .sortableItem {
     touch-action: pan-y;
   }
+
+  /* Added Songs: タイトル下にアクションを配置して余白を確保 */
+  .cardList:not(.setlistCardList) .songCardWithActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .cardList:not(.setlistCardList) .songCardWithActions .songCardMain {
+    width: 100%;
+  }
+  .cardList:not(.setlistCardList) .songCardWithActions .songCardTitle,
+  .cardList:not(.setlistCardList) .songCardWithActions .songCardEditInput {
+    width: 100%;
+    margin: 0;
+  }
+  .cardList:not(.setlistCardList) .songCardWithActions .songCardActions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
   .sortableItem .RemoveFromSetlistButton {
     margin-left: 0;
   }
@@ -800,6 +951,7 @@ footer .copy {
   /* Button */
   .submitButton,
   .songCardDelete,
+  .songCardEdit,
   .RemoveFromSetlistButton,
   .AddToSetlistButton {
     padding: 0.5rem .75rem;
@@ -807,10 +959,12 @@ footer .copy {
 
   /* SongCard buttons - show only icons on mobile */
   .songCardDelete .button-text,
+  .songCardEdit .button-text,
   .AddToSetlistButton .button-text {
     display: none;
   }
   .songCardDelete,
+  .songCardEdit,
   .AddToSetlistButton {
     display: flex;
     align-items: center;
@@ -820,6 +974,7 @@ footer .copy {
     margin-top: 0;
   }
   .songCardDelete .button-icon,
+  .songCardEdit .button-icon,
   .AddToSetlistButton .button-icon {
     font-size: 1rem;
     margin-right: 0;

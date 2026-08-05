@@ -11,6 +11,7 @@ declare module "next-auth" {
     accessToken?: string
     refreshToken?: string
     error?: string
+    isAdmin?: boolean
   }
 
   interface User {

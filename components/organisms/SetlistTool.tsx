@@ -19,32 +19,35 @@ import { useSetlist } from "@/hooks/useSetlist";
 import { useToast } from "@/hooks/useToast";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import { Song } from "@/types";
+
 const SetlistTool = () => {
-  const [date, setDate] = useState("");
-  const [venue, setVenue] = useState("");
-  const [eventTitle, setEventTitle] = useState("");
   const [mcInput, setMcInput] = useState("");
 
-  // bandId / name / logo は BandContext で1回だけ取得
   const { bandName, bandId: contextBandId, logoUrl } = useBand();
   const { bandId } = useBandId({ createIfNotExists: true });
   const resolvedBandId = bandId ?? contextBandId;
-  const { songs, addSong, deleteSong } = useSongs(resolvedBandId);
+  const { songs, addSong, updateSong, deleteSong } = useSongs(resolvedBandId);
   const {
     setlist,
+    date,
+    venue,
+    eventTitle,
+    setDate,
+    setVenue,
+    setEventTitle,
     addSongToSetlist,
     addMCToSetlist,
     removeFromSetlist,
     handleDragEnd,
     getRemovedItem,
-  } = useSetlist();
+    syncSongTitle,
+  } = useSetlist(resolvedBandId);
   const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast();
   const { generatePDF } = usePDFGenerator();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isPDFLoading, setIsPDFLoading] = useState(false);
 
-  // ドラッグ&ドロップ用のセンサー設定
   const sensors = useSensors(
     useSensor(TouchSensor, {
       activationConstraint: {
@@ -59,13 +62,23 @@ const SetlistTool = () => {
     })
   );
 
-  // 曲をセットリストに追加（トースト通知付き）
   const handleAddToSetlist = (songToAdd: string) => {
     addSongToSetlist(songToAdd);
     showToast(`${songToAdd}をセットリストに追加しました`);
   };
 
-  // MCを追加
+  const handleUpdateSong = async (id: string, title: string) => {
+    const previous = songs.find((s) => s.id === id)?.title;
+    const ok = await updateSong(id, title);
+    if (ok && previous && previous !== title) {
+      syncSongTitle(previous, title);
+      showToast("曲名を更新しました");
+    } else if (!ok) {
+      showToast("曲名の更新に失敗しました（重複の可能性があります）");
+    }
+    return ok;
+  };
+
   const handleAddMC = () => {
     if (mcInput.trim()) {
       addMCToSetlist(mcInput);
@@ -73,35 +86,40 @@ const SetlistTool = () => {
     }
   };
 
-  // セットリストから削除（トースト通知付き）
   const handleRemoveFromSetlist = (id: string) => {
     const removedItem = getRemovedItem(id);
     removeFromSetlist(id);
 
     if (removedItem) {
       const message =
-        removedItem.type === 'song'
+        removedItem.type === "song"
           ? `${removedItem.content}をセットリストから削除しました`
           : `MC: ${removedItem.content}をセットリストから削除しました`;
       showToast(message);
     }
   };
 
-  // PDFファイル名を生成
   const generateFileName = () => {
     const parts: string[] = [];
-    if (bandName) parts.push(bandName.replace(/\s+/g, ''));
-    if (date) parts.push(date.replace(/-/g, ''));
+    if (bandName) parts.push(bandName.replace(/\s+/g, ""));
+    if (date) parts.push(date.replace(/-/g, ""));
     if (eventTitle) {
-      const sanitizedTitle = eventTitle.replace(/\s+/g, '').substring(0, 20);
+      const sanitizedTitle = eventTitle.replace(/\s+/g, "").substring(0, 20);
       if (sanitizedTitle) parts.push(sanitizedTitle);
     }
-    const fileName = parts.length > 0 ? `${parts.join('_')}.pdf` : 'setlist.pdf';
-    return fileName;
+    return parts.length > 0 ? `${parts.join("_")}.pdf` : "setlist.pdf";
   };
 
-  // PDFプレビューを開く
   const openPDFPreview = async () => {
+    if (!date.trim() || !eventTitle.trim() || !venue.trim()) {
+      showToast("Date / Event Title / Venue を入力してください");
+      return;
+    }
+    if (setlist.length === 0) {
+      showToast("セットリストに曲またはMCを追加してください");
+      return;
+    }
+
     setIsPDFLoading(true);
     try {
       const url = await generatePDF({
@@ -114,17 +132,15 @@ const SetlistTool = () => {
       });
       setPdfUrl(url);
       setIsPDFModalOpen(true);
-    } catch (error) {
-      showToast('PDFの生成に失敗しました');
+    } catch {
+      showToast("PDFの生成に失敗しました");
     } finally {
       setIsPDFLoading(false);
     }
   };
 
-  // PDFモーダルを閉じる
   const closePDFModal = () => {
     setIsPDFModalOpen(false);
-    // メモリリーク防止のため、URLを解放
     if (pdfUrl) {
       URL.revokeObjectURL(pdfUrl);
       setPdfUrl(null);
@@ -154,6 +170,7 @@ const SetlistTool = () => {
                 id={song.id}
                 song={song.title}
                 onDelete={deleteSong}
+                onUpdate={handleUpdateSong}
                 onAddToSetlist={handleAddToSetlist}
                 buttonLabel="Add Setlist"
                 index={0}
@@ -182,8 +199,8 @@ const SetlistTool = () => {
                     onRemoveFromSetlist={handleRemoveFromSetlist}
                     isInSetlist={true}
                     index={index}
-                    order={item.type === 'song' ? item.order : 0}
-                    isMC={item.type === 'mc'}
+                    order={item.type === "song" ? item.order : 0}
+                    isMC={item.type === "mc"}
                     content={item.content}
                   />
                 ))}
@@ -230,7 +247,13 @@ const SetlistTool = () => {
         </div>
 
         <div className="block">
-          <Submit onClick={openPDFPreview} text="Preview PDF" icon={<FaFilePdf />} loading={isPDFLoading} disabled={isPDFLoading} />
+          <Submit
+            onClick={openPDFPreview}
+            text="Preview PDF"
+            icon={<FaFilePdf />}
+            loading={isPDFLoading}
+            disabled={isPDFLoading}
+          />
         </div>
       </div>
     </div>

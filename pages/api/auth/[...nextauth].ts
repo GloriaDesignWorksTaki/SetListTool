@@ -1,6 +1,7 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "@/utils/supabaseClient";
+import { createServerSupabaseClient } from "@/utils/createServerSupabaseClient";
+import { isAdminEmail } from "@/utils/adminAuth";
 
 if (!process.env.NEXTAUTH_SECRET) {
   throw new Error("NEXTAUTH_SECRET is not set.");
@@ -27,7 +28,13 @@ const shouldRefreshAccessToken = (expiresAt?: number): boolean => {
   return Date.now() >= expiresAt - 60_000;
 };
 
-export default NextAuth({
+/** Supabase / NextAuth で共通化しやすいエラー文言 */
+const AUTH_ERRORS = {
+  emailNotConfirmed: "Email not confirmed",
+  invalidCredentials: "Invalid login credentials",
+} as const;
+
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -40,29 +47,39 @@ export default NextAuth({
           return null;
         }
 
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password,
-          });
+        // リクエスト単位の独立クライアント（共有インスタンス禁止）
+        const supabase = createServerSupabaseClient();
 
-          if (error || !data.user || !data.session) {
-            return null;
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        });
+
+        if (error) {
+          const msg = error.message || ""
+          if (/email not confirmed/i.test(msg)) {
+            throw new Error(AUTH_ERRORS.emailNotConfirmed)
           }
-
-          return {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.name || data.user.email,
-            accessToken: data.session.access_token,
-            refreshToken: data.session.refresh_token,
-            accessTokenExpiresAt:
-              getJwtExpiryMs(data.session.access_token) ??
-              Date.now() + (data.session.expires_in ?? 3600) * 1000,
-          };
-        } catch {
-          return null;
+          if (/invalid login credentials/i.test(msg)) {
+            throw new Error(AUTH_ERRORS.invalidCredentials)
+          }
+          throw new Error(msg || AUTH_ERRORS.invalidCredentials)
         }
+
+        if (!data.user || !data.session) {
+          throw new Error(AUTH_ERRORS.invalidCredentials)
+        }
+
+        return {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || data.user.email,
+          accessToken: data.session.access_token,
+          refreshToken: data.session.refresh_token,
+          accessTokenExpiresAt:
+            getJwtExpiryMs(data.session.access_token) ??
+            Date.now() + (data.session.expires_in ?? 3600) * 1000,
+        };
       },
     }),
   ],
@@ -90,6 +107,7 @@ export default NextAuth({
       }
 
       try {
+        const supabase = createServerSupabaseClient();
         const { data, error } = await supabase.auth.refreshSession({
           refresh_token: token.refreshToken as string,
         });
@@ -118,6 +136,7 @@ export default NextAuth({
         // setSession 用に必要。JWT は httpOnly クッキー内、session API 経由でのみ露出
         session.refreshToken = token.refreshToken as string | undefined;
         session.error = token.error as string | undefined;
+        session.isAdmin = isAdminEmail(session.user.email);
       }
       return session;
     },
@@ -164,4 +183,6 @@ export default NextAuth({
   debug: process.env.NODE_ENV === "development",
   useSecureCookies: process.env.NODE_ENV === "production",
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+export default NextAuth(authOptions);

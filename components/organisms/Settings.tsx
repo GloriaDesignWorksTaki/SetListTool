@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
 import { useBand } from '@/contexts/BandContext'
 import { LogoUpload } from '@/components/atoms/LogoUpload'
@@ -11,12 +11,14 @@ import { Toast } from '@/components/atoms/Toast'
 import { useToast } from '@/hooks/useToast'
 import { bandService } from '@/services/bandService'
 import { logger } from '@/utils/logger'
-import { FiSave } from 'react-icons/fi'
+import { FiSave, FiTrash2 } from 'react-icons/fi'
 
 export default function Settings() {
   const [bandName, setBandName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
   const router = useRouter()
   const { data: session, status } = useSession()
   const {
@@ -41,7 +43,6 @@ export default function Settings() {
       return
     }
 
-    // Context に載った1回 fetch の結果をフォームに反映（追加の bands 問い合わせなし）
     setBandName(contextBandName || '')
     setLogoUrl(contextLogoUrl || '')
   }, [session, status, router, bandLoading, contextBandName, contextLogoUrl])
@@ -92,6 +93,68 @@ export default function Settings() {
     await handleUpdateBandNameWithLogo(logoUrl)
   }
 
+  const clearLocalCaches = () => {
+    if (typeof window === 'undefined') return
+    try {
+      const keys: string[] = []
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i)
+        if (key) keys.push(key)
+      }
+      keys.forEach((key) => {
+        if (key.startsWith('setlist_') || key.startsWith('setlist_v2_') || key.startsWith('bandName_')) {
+          sessionStorage.removeItem(key)
+        }
+      })
+      const localKeys: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key) localKeys.push(key)
+      }
+      localKeys.forEach((key) => {
+        if (key.startsWith('bandName_')) {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') {
+      showToast('Type DELETE to confirm')
+      return
+    }
+
+    const ok = window.confirm(
+      'Are you sure you want to delete your account? Your band, songs, and setlists cannot be restored.'
+    )
+    if (!ok) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      })
+      const data = (await response.json()) as { ok?: boolean; error?: string }
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to delete account')
+      }
+
+      clearLocalCaches()
+      await signOut({ redirect: false })
+      router.push('/login')
+    } catch (error) {
+      logger.error('Account deletion error:', error)
+      showToast(error instanceof Error ? error.message : 'Failed to delete account')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <>
     <main>
@@ -116,7 +179,7 @@ export default function Settings() {
               onChange={(e) => setBandName(e.target.value)}
               className="input"
               placeholder="Enter Band Name"
-              disabled={loading}
+              disabled={loading || deleting}
             />
           </div>
           <div className="block">
@@ -134,6 +197,29 @@ export default function Settings() {
               onClick={handleUpdateBandName}
               text={loading ? 'Saving...' : 'Update'}
               icon={<FiSave />}
+              disabled={loading || deleting}
+            />
+          </div>
+
+          <div className="block dangerZone">
+            <h2>Delete Account</h2>
+            <p className="desc">
+              Deleting your account will also remove your band, songs, and setlists. This cannot be undone.
+            </p>
+            <input
+              type="text"
+              className="input"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder='Type DELETE to confirm'
+              disabled={deleting}
+            />
+            <Button
+              className="submitButton secondary"
+              onClick={() => void handleDeleteAccount()}
+              text={deleting ? 'Deleting...' : 'Delete Account'}
+              icon={<FiTrash2 />}
+              disabled={deleting || deleteConfirm !== 'DELETE'}
             />
           </div>
         </div>
