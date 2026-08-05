@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { bandService } from '@/services/bandService'
-import { logger } from '@/utils/logger'
+import { useBand } from '@/contexts/BandContext'
 
 interface UseLogoReturn {
   logoUrl: string
@@ -9,45 +7,15 @@ interface UseLogoReturn {
 }
 
 /**
- * ロゴの読み込みを行うカスタムフック
- * @param bandId - バンドID
- * @returns ロゴURL、ローディング状態、再読み込み関数
+ * BandContext 経由でロゴURLを取得する（重複 fetch なし）
+ * @param _bandId - 互換のため受け取るが未使用（Context の band を使う）
  */
-export const useLogo = (bandId: string | null): UseLogoReturn => {
-  const [logoUrl, setLogoUrl] = useState<string>('')
-  const [loading, setLoading] = useState(true)
-
-  // ロゴを取得
-  const loadLogo = useCallback(async () => {
-    try {
-      setLoading(true)
-
-      if (!bandId) {
-        setLogoUrl('')
-        setLoading(false)
-        return
-      }
-
-      const logoUrlResult = await bandService.getLogoUrl(bandId)
-      setLogoUrl(logoUrlResult || '')
-
-      setLoading(false)
-    } catch (error) {
-      logger.error('ロゴ取得エラー:', error)
-      setLogoUrl('')
-      setLoading(false)
-    }
-  }, [bandId])
-
-  // バンドIDが変更されたときにロゴを再読み込み
-  useEffect(() => {
-    loadLogo()
-  }, [loadLogo])
+export const useLogo = (_bandId?: string | null): UseLogoReturn => {
+  const { logoUrl, loading, refetch } = useBand()
 
   return {
     logoUrl,
     loading,
-    refreshLogo: loadLogo,
+    refreshLogo: refetch,
   }
 }
-

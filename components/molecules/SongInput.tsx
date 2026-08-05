@@ -29,4 +29,4 @@ export const SongInput: React.FC<SongInputProps> = ({ onAddSong }) => {
       <Button className='submitButton' type="submit" text="Add Song" icon={<FiPlus />} />
     </form>
   )
-} 
+}

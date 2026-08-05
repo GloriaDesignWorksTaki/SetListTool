@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBand } from "@/contexts/BandContext";
@@ -16,7 +16,6 @@ import { FaFilePdf } from "react-icons/fa";
 import { useBandId } from "@/hooks/useBandId";
 import { useSongs } from "@/hooks/useSongs";
 import { useSetlist } from "@/hooks/useSetlist";
-import { useLogo } from "@/hooks/useLogo";
 import { useToast } from "@/hooks/useToast";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import { Song } from "@/types";
@@ -26,9 +25,11 @@ const SetlistTool = () => {
   const [eventTitle, setEventTitle] = useState("");
   const [mcInput, setMcInput] = useState("");
 
-  const { bandName } = useBand();
+  // bandId / name / logo は BandContext で1回だけ取得
+  const { bandName, bandId: contextBandId, logoUrl } = useBand();
   const { bandId } = useBandId({ createIfNotExists: true });
-  const { songs, addSong, deleteSong } = useSongs(bandId);
+  const resolvedBandId = bandId ?? contextBandId;
+  const { songs, addSong, deleteSong } = useSongs(resolvedBandId);
   const {
     setlist,
     addSongToSetlist,
@@ -37,7 +38,6 @@ const SetlistTool = () => {
     handleDragEnd,
     getRemovedItem,
   } = useSetlist();
-  const { logoUrl } = useLogo(bandId);
   const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast();
   const { generatePDF } = usePDFGenerator();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);

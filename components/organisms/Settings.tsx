@@ -16,47 +16,35 @@ import { FiSave } from 'react-icons/fi'
 export default function Settings() {
   const [bandName, setBandName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
-  const [logoIsLight, setLogoIsLight] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { data: session, status } = useSession()
-  const { setBandName: setGlobalBandName } = useBand()
+  const {
+    bandId,
+    bandName: contextBandName,
+    logoUrl: contextLogoUrl,
+    loading: bandLoading,
+    setBandName: setGlobalBandName,
+    setLogoUrl: setGlobalLogoUrl,
+    setBandId,
+    refetch,
+  } = useBand()
   const { message: toastMessage, isVisible: isToastVisible, showToast, hideToast } = useToast()
 
   useEffect(() => {
-    const fetchBand = async () => {
-      if (status === 'loading') {
-        return
-      }
-      
-      if (!session?.user?.id) {
-        router.push('/login')
-        return
-      }
-
-      try {
-        const band = await bandService.getBandByUserId(session.user.id)
-
-        if (band) {
-          setBandName(band.name || '')
-          const logoUrlValue = band.logo_url && band.logo_url.trim() !== '' ? band.logo_url : ''
-          setLogoUrl(logoUrlValue)
-          setLogoIsLight(false)
-        } else {
-          setBandName('')
-          setLogoUrl('')
-          setLogoIsLight(false)
-        }
-      } catch (error: any) {
-        logger.error('エラーが発生しました:', error)
-        // エラー時も初期化
-        setBandName('')
-        setLogoUrl('')
-        setLogoIsLight(false)
-      }
+    if (status === 'loading' || bandLoading) {
+      return
     }
-    fetchBand()
-  }, [session, status, router])
+
+    if (!session?.user?.id) {
+      router.push('/login')
+      return
+    }
+
+    // Context に載った1回 fetch の結果をフォームに反映（追加の bands 問い合わせなし）
+    setBandName(contextBandName || '')
+    setLogoUrl(contextLogoUrl || '')
+  }, [session, status, router, bandLoading, contextBandName, contextLogoUrl])
 
   const handleUpdateBandNameWithLogo = async (logoUrlToSave: string) => {
     try {
@@ -68,47 +56,33 @@ export default function Settings() {
         return
       }
 
-      const existingBandId = await bandService.getBandId(session.user.id)
-
       const logoUrlForSave = logoUrlToSave && logoUrlToSave.trim() !== '' ? logoUrlToSave : null
+      let currentBandId = bandId
 
-      if (existingBandId) {
-        try {
-          await bandService.update(existingBandId, {
-            name: bandName,
-            logo_url: logoUrlForSave || undefined,
-          })
-          await new Promise(resolve => setTimeout(resolve, 200))
-
-          const updatedBand = await bandService.getBandByUserId(session.user.id)
-          if (updatedBand) {
-            const updatedLogoUrl = updatedBand.logo_url && updatedBand.logo_url.trim() !== '' ? updatedBand.logo_url : ''
-            setLogoUrl(updatedLogoUrl)
-          }
-          showToast('設定を更新しました')
-          setGlobalBandName(bandName || 'No Band Name')
-        } catch (error) {
-          logger.error('バンド名の更新に失敗しました:', error)
-          showToast('バンド名の更新に失敗しました')
-        }
+      if (currentBandId) {
+        await bandService.update(currentBandId, {
+          name: bandName,
+          logo_url: logoUrlForSave || undefined,
+        })
       } else {
-        try {
-          await bandService.create(session.user.id, bandName, logoUrlForSave || undefined)
-          await new Promise(resolve => setTimeout(resolve, 200))
-          const createdBand = await bandService.getBandByUserId(session.user.id)
-          if (createdBand) {
-            const createdLogoUrl = createdBand.logo_url && createdBand.logo_url.trim() !== '' ? createdBand.logo_url : ''
-            setLogoUrl(createdLogoUrl)
-          }
-          showToast('バンド名を保存しました')
-        } catch (error) {
-          logger.error('バンド名の保存に失敗しました:', error)
-          showToast('バンド名の保存に失敗しました')
-        }
+        const created = await bandService.create(
+          session.user.id,
+          bandName,
+          logoUrlForSave || undefined
+        )
+        currentBandId = created.id
+        setBandId(created.id)
       }
-    } catch (error: any) {
-      logger.error('エラーが発生しました:', error)
-      showToast('エラーが発生しました')
+
+      const nextLogo = logoUrlForSave || ''
+      setLogoUrl(nextLogo)
+      setGlobalLogoUrl(nextLogo)
+      setGlobalBandName(bandName || 'No Band Name')
+      showToast(currentBandId && bandId ? '設定を更新しました' : 'バンド名を保存しました')
+      await refetch()
+    } catch (error) {
+      logger.error('設定の保存に失敗しました:', error)
+      showToast('設定の保存に失敗しました')
     } finally {
       setLoading(false)
     }
@@ -142,21 +116,25 @@ export default function Settings() {
               onChange={(e) => setBandName(e.target.value)}
               className="input"
               placeholder="Enter Band Name"
+              disabled={loading}
             />
           </div>
           <div className="block">
             <LogoUpload
               onLogoUpload={(url) => {
                 setLogoUrl(url)
-                setTimeout(() => {
-                  handleUpdateBandNameWithLogo(url)
-                }, 100)
+                void handleUpdateBandNameWithLogo(url)
               }}
               currentLogo={logoUrl && logoUrl.trim() !== '' ? logoUrl : undefined}
             />
           </div>
           <div className="block">
-            <Button className="submitButton" onClick={handleUpdateBandName} text="Update" icon={<FiSave />} />
+            <Button
+              className="submitButton"
+              onClick={handleUpdateBandName}
+              text={loading ? 'Saving...' : 'Update'}
+              icon={<FiSave />}
+            />
           </div>
         </div>
       </section>

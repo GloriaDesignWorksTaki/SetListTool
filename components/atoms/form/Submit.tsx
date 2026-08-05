@@ -10,8 +10,8 @@ type SubmitProps = {
 
 const SubmitButton: React.FC<SubmitProps> = ({ onClick, text, icon, loading = false, disabled = false }) => {
   return (
-    <button 
-      className={`submitButton ${loading ? 'loading' : ''}`} 
+    <button
+      className={`submitButton ${loading ? 'loading' : ''}`}
       onClick={onClick}
       disabled={disabled || loading}
     >

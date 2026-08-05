@@ -10,6 +10,7 @@ declare module "next-auth" {
     }
     accessToken?: string
     refreshToken?: string
+    error?: string
   }
 
   interface User {
@@ -19,6 +20,7 @@ declare module "next-auth" {
     image?: string | null
     accessToken?: string
     refreshToken?: string
+    accessTokenExpiresAt?: number
   }
 }
 
@@ -27,5 +29,7 @@ declare module "next-auth/jwt" {
     id: string
     accessToken?: string
     refreshToken?: string
+    accessTokenExpiresAt?: number
+    error?: string
   }
-} 
+}
