@@ -32,7 +32,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const { data: session, status } = useSession()
   const [ready, setReady] = useState(false)
   const lastTokenRef = useRef<string | null | undefined>(undefined)
-  const applySeqRef = useRef(0)
 
   useEffect(() => {
     if (status === 'loading') {
@@ -47,37 +46,33 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return
     }
 
+    // トークンが無い旧セッションは再ログインを促す
+    if (status === 'authenticated' && !session?.accessToken) {
+      setReady(false)
+      lastTokenRef.current = undefined
+      void signOut({ callbackUrl: '/login' })
+      return
+    }
+
     const accessToken = session?.accessToken ?? null
 
-    // 同じトークンなら再適用しない（refetchInterval 等での ready フリッカー防止）
     if (lastTokenRef.current === accessToken && lastTokenRef.current !== undefined) {
       setReady(true)
       return
     }
 
-    const seq = ++applySeqRef.current
     setReady(false)
 
-    const apply = async () => {
+    void (async () => {
       try {
-        if (session?.accessToken) {
-          await setSupabaseAuth(session)
-        } else {
-          await setSupabaseAuth(null)
-        }
-
-        if (seq !== applySeqRef.current) return
+        await setSupabaseAuth(session ?? null)
         lastTokenRef.current = accessToken
         setReady(true)
       } catch (error) {
         console.error('Supabase認証設定エラー:', error)
-        if (seq === applySeqRef.current) {
-          setReady(false)
-        }
+        setReady(false)
       }
-    }
-
-    void apply()
+    })()
   }, [session, status])
 
   const value = useMemo(() => ({ ready }), [ready])
