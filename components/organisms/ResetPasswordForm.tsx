@@ -5,9 +5,11 @@ import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { supabase } from '@/utils/supabaseClient'
 import { validatePassword, validatePasswordConfirmation } from '@/utils/validation'
+import { useLocale } from '@/contexts/LocaleContext'
 
 export default function ResetPasswordForm() {
   const router = useRouter()
+  const { t } = useLocale()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -42,11 +44,7 @@ export default function ResetPasswordForm() {
         if (error) {
           const normalized = `${error} ${errorDescription || ''}`.toLowerCase()
           const isExpired = normalized.includes('expired') || normalized.includes('otp_expired')
-          setError(
-            isExpired
-              ? '再設定リンクの有効期限が切れています。もう一度メールを送信してください。'
-              : '再設定リンクが無効です。もう一度メールを送信してください。'
-          )
+          setError(isExpired ? t('auth.resetLinkExpired') : t('auth.resetLinkInvalid'))
           setPreparing(false)
           return
         }
@@ -58,7 +56,7 @@ export default function ResetPasswordForm() {
         if (queryCode) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(queryCode)
           if (exchangeError) {
-            setError('再設定セッションの確立に失敗しました。リンクを再送してください。')
+            setError(t('auth.resetSessionFailed'))
             setPreparing(false)
             return
           }
@@ -69,33 +67,33 @@ export default function ResetPasswordForm() {
             refresh_token: refreshToken || '',
           })
           if (sessionError) {
-            setError('再設定セッションの確立に失敗しました。リンクを再送してください。')
+            setError(t('auth.resetSessionFailed'))
             setPreparing(false)
             return
           }
           setReady(true)
         } else {
-          // すでにセッションがあれば可
           const {
             data: { session },
           } = await supabase.auth.getSession()
           if (session) {
             setReady(true)
           } else {
-            setError('再設定リンクが無効、または期限切れです。もう一度メールを送信してください。')
+            setError(t('auth.resetLinkInvalid'))
           }
         }
 
-        // URL をクリーンにする
         window.history.replaceState(null, '', '/reset-password')
       } catch {
-        setError('再設定の準備中にエラーが発生しました。')
+        setError(t('auth.resetPrepareFailed'))
       } finally {
         setPreparing(false)
       }
     }
 
     void prepareSession()
+    // 初回マウント時のみ。locale 変更では再実行しない
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,13 +102,19 @@ export default function ResetPasswordForm() {
 
     const passwordValidation = validatePassword(password)
     if (!passwordValidation.isValid) {
-      setError(passwordValidation.error || 'パスワードを確認してください')
+      setError(
+        passwordValidation.errorKey ? t(passwordValidation.errorKey) : t('validation.passwordRequired')
+      )
       return
     }
 
     const confirmValidation = validatePasswordConfirmation(password, confirmPassword)
     if (!confirmValidation.isValid) {
-      setError(confirmValidation.error || 'パスワード再入力を確認してください')
+      setError(
+        confirmValidation.errorKey
+          ? t(confirmValidation.errorKey)
+          : t('validation.passwordConfirmRequired')
+      )
       return
     }
 
@@ -121,16 +125,15 @@ export default function ResetPasswordForm() {
       })
 
       if (updateError) {
-        setError(`パスワードの更新に失敗しました: ${updateError.message}`)
+        setError(t('auth.resetUpdateFailed', { message: updateError.message }))
         return
       }
 
-      // 再設定用セッションはログアウトしてログインへ
       await supabase.auth.signOut({ scope: 'local' })
       setSuccess(true)
     } catch (err) {
-      const message = err instanceof Error ? err.message : '不明なエラー'
-      setError(`パスワードの更新に失敗しました: ${message}`)
+      const message = err instanceof Error ? err.message : t('auth.unknownError')
+      setError(t('auth.resetUpdateFailed', { message }))
     } finally {
       setLoading(false)
     }
@@ -140,23 +143,23 @@ export default function ResetPasswordForm() {
     <div className="auth">
       <div className="authForm">
         <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
-        <h2>新しいパスワード</h2>
+        <h2>{t('auth.resetTitle')}</h2>
 
-        {preparing && <p className="desc">準備中...</p>}
+        {preparing && <p className="desc">{t('auth.preparing')}</p>}
 
         {error && <div className="errorMessage">{error}</div>}
 
         {success ? (
           <>
             <div className="authNotice authNoticeSuccess">
-              パスワードを更新しました。新しいパスワードでログインしてください。
+              {t('auth.resetSuccess')}
             </div>
             <button
               type="button"
               className="submitButton"
               onClick={() => router.push('/login')}
             >
-              <span>ログインへ</span>
+              <span>{t('auth.goToLogin')}</span>
             </button>
           </>
         ) : (
@@ -166,7 +169,7 @@ export default function ResetPasswordForm() {
               <input
                 type="password"
                 className="input"
-                placeholder="新しいパスワード"
+                placeholder={t('auth.newPassword')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -175,7 +178,7 @@ export default function ResetPasswordForm() {
               <input
                 type="password"
                 className="input"
-                placeholder="新しいパスワード（確認）"
+                placeholder={t('auth.newPasswordConfirm')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading}
@@ -186,7 +189,7 @@ export default function ResetPasswordForm() {
                 className={`submitButton ${loading ? 'loading' : ''}`}
                 disabled={loading}
               >
-                <span>{loading ? '更新中...' : 'パスワードを更新'}</span>
+                <span>{loading ? t('auth.updating') : t('auth.updatePassword')}</span>
               </button>
             </form>
           )
@@ -194,11 +197,11 @@ export default function ResetPasswordForm() {
 
         {!success && (
           <p className="signUpButton" onClick={() => router.push('/forgot-password')}>
-            再設定メールを送り直す
+            {t('auth.resendReset')}
           </p>
         )}
         <p className="signUpButton" onClick={() => router.push('/login')}>
-          ログインに戻る
+          {t('auth.loginLink')}
         </p>
       </div>
     </div>

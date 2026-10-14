@@ -4,7 +4,7 @@ import { Button } from '@/components/atoms/Button'
 import { FiPlus } from 'react-icons/fi'
 
 interface SongInputProps {
-  onAddSong: (song: string) => void
+  onAddSong: (song: string) => void | Promise<void>
 }
 
 export const SongInput: React.FC<SongInputProps> = ({ onAddSong }) => {

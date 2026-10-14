@@ -69,10 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (error) {
         if (isMissingTableError(error)) {
-          return res.status(503).json({
-            error: "setlists table missing",
-            code: "missing_table",
-          })
+          // テーブル未作成時は UI / コンソールを汚さずローカル保存にフォールバック
+          return res.status(200).json({ setlist: null, code: "missing_table" })
         }
         return res.status(500).json({ error: error.message || "fetch failed" })
       }
@@ -115,10 +113,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (error) {
         if (isMissingTableError(error)) {
-          return res.status(503).json({
-            error: "setlists table missing",
-            code: "missing_table",
-          })
+          // テーブル未作成時は成功扱いで返し、クライアントは sessionStorage に保持
+          return res.status(200).json({ ok: true, code: "missing_table" })
         }
         return res.status(500).json({
           error: error.message || error.code || "save failed",

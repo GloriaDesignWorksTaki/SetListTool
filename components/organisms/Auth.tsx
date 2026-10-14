@@ -6,12 +6,14 @@ import { useRouter } from 'next/router'
 import { signIn, useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { AiOutlineLogin } from 'react-icons/ai'
+import { useLocale } from '@/contexts/LocaleContext'
+import type { MessageKey } from '@/i18n/messages'
 
 interface AuthProps {
   disableAutoRedirect?: boolean
   notice?: {
     type: 'success' | 'error'
-    text: string
+    textKey: MessageKey
     allowResend?: boolean
   } | null
 }
@@ -27,6 +29,7 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
   const [resending, setResending] = useState(false)
   const router = useRouter()
   const { data: session, status } = useSession()
+  const { t } = useLocale()
 
   useEffect(() => {
     if (!disableAutoRedirect && status === 'authenticated') {
@@ -49,7 +52,7 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
     const targetEmail = email.trim()
 
     if (!targetEmail) {
-      setResendMessage('再送するメールアドレスを入力してください。')
+      setResendMessage(t('auth.resendNeedEmail'))
       setResendMessageType('error')
       return
     }
@@ -65,15 +68,15 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
       })
 
       if (error) {
-        setResendMessage(`確認メールの再送に失敗しました: ${error.message}`)
+        setResendMessage(t('auth.resendFailed', { message: error.message }))
         setResendMessageType('error')
       } else {
-        setResendMessage('確認メールを再送しました。メールをご確認ください。')
+        setResendMessage(t('auth.resendSuccess'))
         setResendMessageType('success')
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : '不明なエラー'
-      setResendMessage(`確認メールの再送に失敗しました: ${message}`)
+      const message = error instanceof Error ? error.message : t('auth.unknownError')
+      setResendMessage(t('auth.resendFailed', { message }))
       setResendMessageType('error')
     } finally {
       setResending(false)
@@ -82,7 +85,7 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
 
   const handleAuth = async () => {
     if (!email || !password) {
-      setMessage('メールアドレスとパスワードを入力してください')
+      setMessage(t('auth.emailRequiredBoth'))
       return
     }
 
@@ -93,7 +96,6 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
     setAllowResend(false)
 
     try {
-      // NextAuthを使用してログイン
       const result = await signIn('credentials', {
         email,
         password,
@@ -106,24 +108,24 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
           err.includes('Email not confirmed') ||
           err.toLowerCase().includes('email not confirmed')
         ) {
-          setMessage('メール確認が必要です。メールを確認してください。')
+          setMessage(t('auth.emailNotConfirmed'))
           setAllowResend(true)
         } else if (
           err.includes('Invalid login credentials') ||
           err.toLowerCase().includes('invalid login credentials')
         ) {
-          setMessage('メールアドレスまたはパスワードが正しくありません')
+          setMessage(t('auth.invalidCredentials'))
         } else if (err === 'CredentialsSignin') {
-          setMessage('メールアドレスまたはパスワードが正しくありません')
+          setMessage(t('auth.invalidCredentials'))
         } else {
-          setMessage(`ログインエラー: ${err}`)
+          setMessage(t('auth.loginError', { message: err }))
         }
       } else if (result?.ok) {
         router.push('/')
       }
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : '不明なエラー'
-      setMessage(`エラーが発生しました: ${msg}`)
+      const msg = error instanceof Error ? error.message : t('auth.unknownError')
+      setMessage(t('auth.genericError', { message: msg }))
     } finally {
       setLoading(false)
     }
@@ -138,13 +140,13 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
       <div className="authForm">
         <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
         <div className="desc">
-          <p>Setlist Maker β Version 0.99.000</p>
+          <p>{t('auth.beta')}</p>
         </div>
-        <h2>ログイン</h2>
+        <h2>{t('auth.loginTitle')}</h2>
 
         {notice && (
           <div className={`authNotice ${notice.type === 'success' ? 'authNoticeSuccess' : 'authNoticeError'}`}>
-            {notice.text}
+            {t(notice.textKey)}
           </div>
         )}
 
@@ -160,7 +162,7 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
             onClick={handleResendConfirmationEmail}
             disabled={resending}
           >
-            {resending ? '再送中...' : '確認メールを再送する'}
+            {resending ? t('auth.resending') : t('auth.resendConfirm')}
           </button>
         )}
         {resendMessage && (
@@ -171,34 +173,34 @@ export default function Auth({ disableAutoRedirect = false, notice = null }: Aut
 
         <input
           type="email"
-          placeholder="メールアドレス"
+          placeholder={t('auth.email')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="input"
         />
         <input
           type="password"
-          placeholder="パスワード"
+          placeholder={t('auth.password')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="input"
         />
-        <button 
-          onClick={handleAuth} 
-          disabled={loading} 
+        <button
+          onClick={handleAuth}
+          disabled={loading}
           className={`submitButton ${loading ? 'loading' : ''}`}
         >
           {!loading && <AiOutlineLogin />}
-          <span>{loading ? '処理中...' : 'ログイン'}</span>
+          <span>{loading ? t('auth.processing') : t('auth.login')}</span>
         </button>
 
         <p className="signUpButton" onClick={() => router.push('/forgot-password')}>
-          パスワードをお忘れですか？
+          {t('auth.forgotLink')}
         </p>
         <p className="signUpButton" onClick={() => {
           router.push('/signup')
         }}>
-          サインアップはこちら
+          {t('auth.signupLink')}
         </p>
       </div>
     </div>

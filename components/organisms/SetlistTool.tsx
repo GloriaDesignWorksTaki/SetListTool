@@ -62,6 +62,19 @@ const SetlistTool = () => {
     })
   );
 
+  const handleAddSong = async (title: string) => {
+    const result = await addSong(title);
+    if (result === "added") {
+      showToast(`${title}を追加しました`);
+    } else if (result === "duplicate") {
+      showToast("同じ曲名がすでに登録されています");
+    } else if (result === "no_band") {
+      showToast("先にバンド名を設定してください");
+    } else {
+      showToast("曲の追加に失敗しました");
+    }
+  };
+
   const handleAddToSetlist = (songToAdd: string) => {
     addSongToSetlist(songToAdd);
     showToast(`${songToAdd}をセットリストに追加しました`);
@@ -159,7 +172,7 @@ const SetlistTool = () => {
       <div className="container">
         <div className="block">
           <H2Title title="Song Title" />
-          <SongInput onAddSong={addSong} />
+          <SongInput onAddSong={handleAddSong} />
         </div>
         <div className="block">
           <H2Title title="Added Songs" />

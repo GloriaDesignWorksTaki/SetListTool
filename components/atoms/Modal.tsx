@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect } from 'react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface ModalProps {
   isOpen: boolean
@@ -17,6 +18,8 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   showCloseButton = true,
 }) => {
+  const { t } = useLocale()
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -38,7 +41,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="modal-body">{children}</div>
         {showCloseButton && (
           <button className="modal-close-button" onClick={onClose}>
-            閉じる
+            {t('common.close')}
           </button>
         )}
       </div>

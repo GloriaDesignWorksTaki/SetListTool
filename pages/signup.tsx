@@ -1,14 +1,10 @@
 import SignupForm from '@/components/organisms/SignupForm'
-import Head from 'next/head'
+import { LocaleHead } from '@/components/atoms/LocaleHead'
 
 export default function SignupPage() {
   return (
     <main>
-      <Head>
-        <title>サインアップ | Setlist Maker</title>
-        <meta name="description" content="Setlist Makerのサインアップ画面です。" />
-        <link rel="icon" href="favicon.ico" />
-      </Head>
+      <LocaleHead titleKey="meta.signupTitle" descriptionKey="meta.signupDescription" />
       <section>
         <div className="wrapper">
           <SignupForm />
@@ -17,7 +13,3 @@ export default function SignupPage() {
     </main>
   )
 }
-
-
-
-

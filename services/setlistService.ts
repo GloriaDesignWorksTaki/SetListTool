@@ -33,8 +33,8 @@ export const setlistService = {
         code?: string
       }
 
-      if (response.status === 503 || data.code === 'missing_table') {
-        logger.error('setlists テーブル未作成。マイグレーションを実行してください。', data)
+      // テーブル未作成時はローカル保存のみ（コンソールは汚さない）
+      if (data.code === 'missing_table') {
         return null
       }
 
@@ -77,8 +77,7 @@ export const setlistService = {
         code?: string
       }
 
-      if (response.status === 503 || data.code === 'missing_table') {
-        logger.error('setlists テーブル未作成。マイグレーションを実行してください。', data)
+      if (data.code === 'missing_table') {
         return
       }
 

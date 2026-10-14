@@ -1,14 +1,10 @@
-import Head from 'next/head'
 import ForgotPasswordForm from '@/components/organisms/ForgotPasswordForm'
+import { LocaleHead } from '@/components/atoms/LocaleHead'
 
 export default function ForgotPasswordPage() {
   return (
     <main>
-      <Head>
-        <title>パスワード再設定 | Setlist Maker</title>
-        <meta name="description" content="Setlist Makerのパスワード再設定画面です。" />
-        <link rel="icon" href="favicon.ico" />
-      </Head>
+      <LocaleHead titleKey="meta.forgotTitle" descriptionKey="meta.forgotDescription" />
       <section>
         <div className="wrapper">
           <ForgotPasswordForm />

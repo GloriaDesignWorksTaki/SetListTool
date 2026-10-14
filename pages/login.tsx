@@ -1,14 +1,10 @@
-import Head from 'next/head'
 import { LoginWithWelcome } from '@/components/organisms/LoginWithWelcome'
+import { LocaleHead } from '@/components/atoms/LocaleHead'
 
 export default function LoginPage() {
   return (
     <main>
-      <Head>
-        <title>login | Setlist Maker</title>
-        <meta name="description" content="Setlist Makerのログイン画面です。" />
-        <link rel="icon" href="favicon.ico" />
-      </Head>
+      <LocaleHead titleKey="meta.loginTitle" descriptionKey="meta.loginDescription" />
       <section>
         <div className="wrapper">
           <LoginWithWelcome />

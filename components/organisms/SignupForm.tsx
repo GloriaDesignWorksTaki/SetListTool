@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { EmailSentModal } from '@/components/molecules/EmailSentModal'
 import { PrivacyPolicyModal } from '@/components/molecules/PrivacyPolicyModal'
 import { validateSignupForm, type SignupFormData } from '@/utils/validation'
+import { useLocale } from '@/contexts/LocaleContext'
 
 export default function SignupForm() {
   const [bandName, setBandName] = useState('')
@@ -20,6 +21,7 @@ export default function SignupForm() {
   const [showEmailSentModal, setShowEmailSentModal] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const router = useRouter()
+  const { t } = useLocale()
 
   type CheckEmailApiResponse = {
     exists?: boolean
@@ -34,16 +36,10 @@ export default function SignupForm() {
   }
 
   const getEmailCheckErrorMessage = (errorCode?: CheckEmailApiResponse['errorCode']): string => {
-    if (errorCode === 'missing_service_role_key') {
-      return 'メール重複チェックの設定が不足しています（SUPABASE_SERVICE_ROLE_KEY）'
+    if (errorCode === 'missing_service_role_key' || errorCode === 'missing_supabase_url') {
+      return t('auth.emailCheckConfigMissing')
     }
-    if (errorCode === 'missing_supabase_url') {
-      return 'メール重複チェックの設定が不足しています（NEXT_PUBLIC_SUPABASE_URL）'
-    }
-    if (errorCode === 'supabase_admin_error') {
-      return 'メール重複チェックに失敗したため、そのままサインアップ処理を続行します'
-    }
-    return 'メール重複チェックに失敗したため、そのままサインアップ処理を続行します'
+    return t('auth.emailCheckFailed')
   }
 
   const checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; fallbackMessage?: string }> => {
@@ -54,7 +50,7 @@ export default function SignupForm() {
       },
       body: JSON.stringify({ email: emailToCheck }),
     })
-    
+
     const data: CheckEmailApiResponse = await response.json().catch(() => ({}))
     if (!response.ok) {
       return {
@@ -77,17 +73,17 @@ export default function SignupForm() {
     }
 
     const result = validateSignupForm(formData)
-    if (!result.isValid && result.error) {
-      setError(result.error)
+    if (!result.isValid && result.errorKey) {
+      setError(t(result.errorKey))
       return false
     }
 
     const emailCheck = await checkEmailExists(email)
     if (emailCheck.exists) {
-        setError('すでに利用されているメールアドレスです')
-        return false
+      setError(t('auth.emailExists'))
+      return false
     }
-    
+
     if (emailCheck.fallbackMessage) {
       setError(emailCheck.fallbackMessage)
     }
@@ -95,7 +91,6 @@ export default function SignupForm() {
     return true
   }
 
-  // リダイレクトURLを取得
   const getRedirectUrl = (): string => {
     if (typeof window === 'undefined') return '/login?type=email'
     return `${window.location.origin}/login?type=email`
@@ -112,7 +107,6 @@ export default function SignupForm() {
     }
 
     try {
-      // Supabaseでユーザー登録（user_metadataにバンド情報を保存）
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -125,52 +119,48 @@ export default function SignupForm() {
         },
       })
 
-      // エラーチェック
       if (authError) {
         setLoading(false)
 
         const message = authError.message?.toLowerCase?.() ?? ''
-        const code = (authError as any).code ?? (authError as any).status ?? ''
+        const code = (authError as { code?: string; status?: string }).code
+          ?? (authError as { code?: string; status?: string }).status
+          ?? ''
 
-        // === 重複メールアドレス判定 ===
         if (
           message === 'user already registered'.toLowerCase() ||
           message.includes('user already registered') ||
           code === 'user_already_registered'
         ) {
-          const msg = 'すでに利用されているメールアドレスです'
-          setError(msg)
+          setError(t('auth.emailExists'))
           return
         }
 
-        // その他のエラー（開発時のみ debug 情報を表示）
         const debugInfo =
           process.env.NODE_ENV === 'development'
             ? ` (code: ${code || 'unknown'})`
             : ''
-        setError(`サインアップエラー: ${authError.message}${debugInfo}`)
+        setError(`${t('auth.signupError', { message: authError.message })}${debugInfo}`)
         return
       }
 
-      // authError が無いのに user が返ってこない場合も念のためエラー扱い
       if (!authData || !authData.user) {
         setLoading(false)
-        setError('サインアップに失敗しました。時間をおいて再度お試しください。')
+        setError(t('auth.signupFailed'))
         return
       }
 
-      // 成功時：メール送信確認モーダルを表示
       setLoading(false)
       setShowEmailSentModal(true)
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoading(false)
-      setError(`エラーが発生しました: ${error.message ?? '不明なエラー'}`)
+      const message = error instanceof Error ? error.message : t('auth.unknownError')
+      setError(t('auth.genericError', { message }))
     }
   }
 
   const handleEmailSentModalClose = () => {
     setShowEmailSentModal(false)
-    // ログインページにリダイレクト
     router.push('/login')
   }
 
@@ -179,7 +169,7 @@ export default function SignupForm() {
       <div className="auth">
         <div className="authForm">
           <Image src="/img/logo.webp" alt="logo" width={60} height={60} />
-          <h2>サインアップ</h2>
+          <h2>{t('auth.signupTitle')}</h2>
 
           {error && (
             <div className="errorMessage">
@@ -190,7 +180,7 @@ export default function SignupForm() {
           <form onSubmit={handleSubmit}>
             <input
               type="text"
-              placeholder="バンド名*"
+              placeholder={t('auth.bandName')}
               value={bandName}
               onChange={(e) => setBandName(e.target.value)}
               className="input"
@@ -198,7 +188,7 @@ export default function SignupForm() {
             />
             <input
               type="text"
-              placeholder="バンドのジャンル"
+              placeholder={t('auth.genre')}
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
               className="input"
@@ -206,7 +196,7 @@ export default function SignupForm() {
             />
             <input
               type="email"
-              placeholder="メールアドレス*"
+              placeholder={`${t('auth.email')}*`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input"
@@ -214,7 +204,7 @@ export default function SignupForm() {
             />
             <input
               type="password"
-              placeholder="パスワード*"
+              placeholder={`${t('auth.password')}*`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
@@ -222,7 +212,7 @@ export default function SignupForm() {
             />
             <input
               type="password"
-              placeholder="パスワード再入力*"
+              placeholder={`${t('auth.passwordConfirm')}*`}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="input"
@@ -239,6 +229,7 @@ export default function SignupForm() {
                   style={{ marginRight: '0.5rem' }}
                 />
                 <span style={{ fontSize: '0.9rem' }}>
+                  {t('auth.privacyAgreePrefix')}
                   <span
                     onClick={(e) => {
                       e.preventDefault()
@@ -246,9 +237,9 @@ export default function SignupForm() {
                     }}
                     style={{ color: 'var(--primary-color)', textDecoration: 'underline', cursor: 'pointer' }}
                   >
-                    プライバシーポリシー
+                    {t('auth.privacyPolicy')}
                   </span>
-                  に同意する*
+                  {t('auth.privacyAgreeSuffix')}
                 </span>
               </label>
             </div>
@@ -258,12 +249,12 @@ export default function SignupForm() {
               disabled={loading}
               className={`submitButton ${loading ? 'loading' : ''}`}
             >
-              <span>{loading ? '処理中...' : '送信'}</span>
+              <span>{loading ? t('auth.processing') : t('auth.signup')}</span>
             </button>
           </form>
 
           <p className="signUpButton" onClick={() => router.push('/login')}>
-            ログインはこちら
+            {t('auth.loginLink')}
           </p>
         </div>
       </div>

@@ -1,6 +1,3 @@
--- セットリスト永続化用テーブル
--- Supabase SQL Editor で実行してください
-
 create table if not exists public.setlists (
   id uuid primary key default gen_random_uuid(),
   band_id uuid not null references public.bands(id) on delete cascade,

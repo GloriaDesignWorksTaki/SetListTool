@@ -1,10 +1,13 @@
 /**
  * バリデーション用ユーティリティ関数
+ * 文言は i18n の MessageKey を返し、表示側で翻訳する
  */
+
+import type { MessageKey } from '@/i18n/messages'
 
 export interface ValidationResult {
   isValid: boolean
-  error?: string
+  errorKey?: MessageKey
 }
 
 /**
@@ -12,12 +15,12 @@ export interface ValidationResult {
  */
 export const validateEmail = (email: string): ValidationResult => {
   if (!email || !email.trim()) {
-    return { isValid: false, error: 'メールアドレスを入力してください' }
+    return { isValid: false, errorKey: 'validation.emailRequired' }
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
-    return { isValid: false, error: '有効なメールアドレスを入力してください' }
+    return { isValid: false, errorKey: 'validation.emailInvalid' }
   }
 
   return { isValid: true }
@@ -28,15 +31,15 @@ export const validateEmail = (email: string): ValidationResult => {
  */
 export const validatePassword = (password: string): ValidationResult => {
   if (!password) {
-    return { isValid: false, error: 'パスワードを入力してください' }
+    return { isValid: false, errorKey: 'validation.passwordRequired' }
   }
 
   if (password.length < 6) {
-    return { isValid: false, error: 'パスワードは6文字以上で入力してください' }
+    return { isValid: false, errorKey: 'validation.passwordMin' }
   }
 
   if (password.length > 128) {
-    return { isValid: false, error: 'パスワードは128文字以内で入力してください' }
+    return { isValid: false, errorKey: 'validation.passwordMax' }
   }
 
   return { isValid: true }
@@ -50,11 +53,11 @@ export const validatePasswordConfirmation = (
   confirmPassword: string
 ): ValidationResult => {
   if (!confirmPassword) {
-    return { isValid: false, error: 'パスワード再入力を行ってください' }
+    return { isValid: false, errorKey: 'validation.passwordConfirmRequired' }
   }
 
   if (password !== confirmPassword) {
-    return { isValid: false, error: 'パスワードが一致しません' }
+    return { isValid: false, errorKey: 'validation.passwordMismatch' }
   }
 
   return { isValid: true }
@@ -65,11 +68,11 @@ export const validatePasswordConfirmation = (
  */
 export const validateBandName = (bandName: string): ValidationResult => {
   if (!bandName || !bandName.trim()) {
-    return { isValid: false, error: 'バンド名を入力してください' }
+    return { isValid: false, errorKey: 'validation.bandNameRequired' }
   }
 
   if (bandName.trim().length > 100) {
-    return { isValid: false, error: 'バンド名は100文字以内で入力してください' }
+    return { isValid: false, errorKey: 'validation.bandNameMax' }
   }
 
   return { isValid: true }
@@ -80,7 +83,7 @@ export const validateBandName = (bandName: string): ValidationResult => {
  */
 export const validateGenre = (genre: string): ValidationResult => {
   if (genre && genre.trim().length > 50) {
-    return { isValid: false, error: 'バンドジャンルは50文字以内で入力してください' }
+    return { isValid: false, errorKey: 'validation.genreMax' }
   }
 
   return { isValid: true }
@@ -99,31 +102,26 @@ export interface SignupFormData {
 }
 
 export const validateSignupForm = (data: SignupFormData): ValidationResult => {
-  // バンド名
   const bandNameResult = validateBandName(data.bandName)
   if (!bandNameResult.isValid) {
     return bandNameResult
   }
 
-  // ジャンル
   const genreResult = validateGenre(data.genre)
   if (!genreResult.isValid) {
     return genreResult
   }
 
-  // メールアドレス
   const emailResult = validateEmail(data.email)
   if (!emailResult.isValid) {
     return emailResult
   }
 
-  // パスワード
   const passwordResult = validatePassword(data.password)
   if (!passwordResult.isValid) {
     return passwordResult
   }
 
-  // パスワード確認
   const passwordConfirmationResult = validatePasswordConfirmation(
     data.password,
     data.confirmPassword
@@ -132,9 +130,8 @@ export const validateSignupForm = (data: SignupFormData): ValidationResult => {
     return passwordConfirmationResult
   }
 
-  // プライバシーポリシー同意
   if (!data.privacyAgreed) {
-    return { isValid: false, error: 'プライバシーポリシーに同意してください' }
+    return { isValid: false, errorKey: 'validation.privacyRequired' }
   }
 
   return { isValid: true }

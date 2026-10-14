@@ -3,10 +3,12 @@ import { songService } from '@/services/songService'
 import { Song } from '@/types'
 import { logger } from '@/utils/logger'
 
+export type AddSongResult = 'added' | 'duplicate' | 'no_band' | 'error'
+
 interface UseSongsReturn {
   songs: Song[]
   loading: boolean
-  addSong: (title: string) => Promise<void>
+  addSong: (title: string) => Promise<AddSongResult>
   updateSong: (id: string, title: string) => Promise<boolean>
   deleteSong: (id: string) => Promise<void>
   refreshSongs: () => Promise<void>
@@ -40,20 +42,22 @@ export const useSongs = (bandId: string | null): UseSongsReturn => {
   }, [bandId])
 
   const addSong = useCallback(
-    async (title: string) => {
+    async (title: string): Promise<AddSongResult> => {
       if (!bandId) {
         logger.error('バンドIDが見つかりません。先にバンド名を設定してください。')
-        return
+        return 'no_band'
       }
       if (songs.some((song) => song.title === title)) {
-        return
+        return 'duplicate'
       }
 
       try {
         const created = await songService.create(title, bandId)
         setSongs((prev) => [...prev, created])
+        return 'added'
       } catch (error) {
         logger.error('曲の保存エラー:', error)
+        return 'error'
       }
     },
     [songs, bandId]

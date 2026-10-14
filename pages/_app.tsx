@@ -7,6 +7,8 @@ import Footer from "@/components/organisms/Footer";
 import { useRouter } from "next/router";
 import { BandProvider } from "@/contexts/BandContext";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+import { LocaleProvider } from "@/contexts/LocaleContext";
+import { LangSelect } from "@/components/atoms/LangSelect";
 
 const App = ({ Component, pageProps }: AppProps) => {
   const router = useRouter();
@@ -23,13 +25,16 @@ const App = ({ Component, pageProps }: AppProps) => {
       refetchInterval={45 * 60}
       refetchOnWindowFocus={false}
     >
-      <SupabaseAuthProvider>
-        <BandProvider>
-          {!isAuthPage && <Header />}
-          <Component {...pageProps} />
-          {!isAuthPage && <Footer />}
-        </BandProvider>
-      </SupabaseAuthProvider>
+      <LocaleProvider>
+        <SupabaseAuthProvider>
+          <BandProvider>
+            {isAuthPage && <LangSelect floating />}
+            {!isAuthPage && <Header />}
+            <Component {...pageProps} />
+            {!isAuthPage && <Footer />}
+          </BandProvider>
+        </SupabaseAuthProvider>
+      </LocaleProvider>
     </SessionProvider>
   )
 }
